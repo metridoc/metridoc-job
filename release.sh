@@ -10,11 +10,6 @@ systemCall() {
 	fi
 }
 
-if grep -q "\-SNAPSHOT" "build.gradle"; then
-    echo "build file has SNAPSHOT in it, skipping release"
-    exit 0
-fi
-
 if grep -q "\-SNAPSHOT" "VERSION"; then
     echo "VERSION file has SNAPSHOT in it, skipping release"
     exit 0
@@ -36,7 +31,8 @@ echo ""
 echo "Releasing ${PROJECT_VERSION} to BinTray"
 echo ""
 
-systemCall "./gradlew publishArchives publishDistribution bumpVersion"
+#systemCall "./gradlew publishArchives publishDistribution bumpVersion"
+systemCall "./gradlew publishArchives bumpVersion"
 systemCall "git add VERSION"
 systemCall "git commit -m 'committing a new version'"
 systemCall "git push origin master"
