@@ -1,1 +1,1 @@
-include 'metridoc-job-core'
+include 'metridoc-job-core', 'metridoc-tool-gorm'
