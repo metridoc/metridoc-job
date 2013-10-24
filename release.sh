@@ -15,7 +15,7 @@ if grep -q "\-SNAPSHOT" "VERSION"; then
     exit 0
 fi
 
-systemCall "./gradlew test"
+systemCall "./gradlew test integTests"
 
 #releases to github
 PROJECT_VERSION=`cat VERSION`
@@ -31,8 +31,7 @@ echo ""
 echo "Releasing ${PROJECT_VERSION} to BinTray"
 echo ""
 
-#systemCall "./gradlew publishArchives publishDistribution bumpVersion"
-systemCall "./gradlew publishArchives bumpVersion"
+systemCall "./gradlew publishArchives publishDistribution bumpVersion"
 systemCall "git add VERSION"
 systemCall "git commit -m 'committing a new version'"
 systemCall "git push origin master"
