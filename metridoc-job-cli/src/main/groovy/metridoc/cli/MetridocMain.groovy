@@ -146,6 +146,9 @@ class MetridocMain {
             AnsiConsole.systemInstall()
             System.out = new JansiPrintWriter(System.out)
             System.err = new JansiPrintWriter(System.err)
+            Thread.addShutdownHook {
+                AnsiConsole.systemUninstall()
+            }
         }
 
         def arguments = options.arguments()
@@ -166,7 +169,7 @@ class MetridocMain {
             try {
                 file = File.createTempFile(fileName, ".groovy")
             }
-            catch (IOException e) {
+            catch (IOException ignored) {
                 def tmpDir = new File("$home${slash}.metridoc${slash}tmp")
                 if(!tmpDir.exists()) {
                     assert tmpDir.mkdirs() : "Could not create $tmpDir"
