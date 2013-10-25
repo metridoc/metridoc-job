@@ -18,10 +18,7 @@
 package metridoc.cli
 
 import groovy.io.FileType
-import metridoc.utils.ArchiveMethods
 import metridoc.utils.JansiPrintWriter
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.SystemUtils
 import org.fusesource.jansi.AnsiConsole
 import org.slf4j.LoggerFactory
@@ -57,9 +54,9 @@ class MetridocMain {
 
             setupLogging(options)
 
-            checkForAndInstallDependencies(options)
-
             if (doInstallDeps(options)) return
+
+            checkForAndInstallDependencies(options)
 
             if (doInstall(options)) return
 
@@ -97,37 +94,7 @@ class MetridocMain {
     }
 
     boolean doListJobs(OptionAccessor options) {
-        def cliArgs = options.arguments()
-        if ("list-jobs" == cliArgs[0]) {
-            def jobDir = new File(jobPath)
-            println ""
-
-            if (jobDir.listFiles()) {
-                println "Available Jobs:"
-            }
-            else {
-                println "No jobs have been installed"
-            }
-
-            jobDir.eachFile(FileType.DIRECTORIES) {
-                def m = it.name =~ /metridoc-job-(\w+)-(.+)/
-                if (m.matches()) {
-                    def name = m.group(1)
-                    def version = m.group(2)
-                    println " --> $name (v$version)"
-                }
-                m = it.name =~ /metridoc-job-(\w+)/
-                if (m.matches()) {
-                    def name = m.group(1)
-                    println " --> $name"
-                }
-            }
-            println ""
-
-            return true
-        }
-
-        return false
+        new ListJobsCommand(main: this).run(options)
     }
 
     protected static boolean isUrl(String possibleUrl) {
@@ -142,96 +109,9 @@ class MetridocMain {
 
     @SuppressWarnings(["GroovyAccessibility", "GroovyVariableNotAssigned"])
     def protected runJob(OptionAccessor options) {
-        if (!options.plainText) {
-            AnsiConsole.systemInstall()
-            System.out = new JansiPrintWriter(System.out)
-            System.err = new JansiPrintWriter(System.err)
-            Thread.addShutdownHook {
-                AnsiConsole.systemUninstall()
-            }
-        }
-
-        def arguments = options.arguments()
-        def shortJobName = arguments[0]
-
-        def file
-        if (isUrl(shortJobName)) {
-            def slashIndex = shortJobName.lastIndexOf("/")
-            def questionIndex = shortJobName.lastIndexOf(".groovy")
-            def fileName
-            if (questionIndex > 0) {
-                fileName = shortJobName.substring(slashIndex + 1, questionIndex)
-            }
-            else {
-                fileName = shortJobName.substring(slashIndex + 1)
-            }
-
-            try {
-                file = File.createTempFile(fileName, ".groovy")
-            }
-            catch (IOException ignored) {
-                def tmpDir = new File("$home${slash}.metridoc${slash}tmp")
-                if(!tmpDir.exists()) {
-                    assert tmpDir.mkdirs() : "Could not create $tmpDir"
-                }
-                file = new File(tmpDir, "${fileName}.groovy")
-                file.createNewFile()
-            }
-
-            file.setText(new URL(shortJobName).text, "utf-8")
-            file.deleteOnExit()
-        }
-
-        file = file ?: new File(shortJobName)
-        File metridocScript
-        def loader = findHighestLevelClassLoader()
-        addLibDirectories(loader)
-
-        if (file.isFile()) {
-            metridocScript = file
-        }
-        else if (file.isDirectory()) {
-            addDirectoryResourcesToClassPath(this.class.classLoader as URLClassLoader, file)
-            metridocScript = getRootScriptFromDirectory(file)
-        }
-        else {
-            def jobDir = getJobDir(shortJobName)
-            addDirectoryResourcesToClassPath(this.class.classLoader as URLClassLoader, jobDir)
-            metridocScript = getRootScriptFromDirectory(jobDir, shortJobName)
-        }
-
-        def binding = new Binding()
-
-        binding.args = [] as String[]
-        def log = LoggerFactory.getLogger(this.getClass())
-        log.debug "parsing arguments $arguments to be used with job $shortJobName"
-        def argsList = args as List
-        def index = argsList.indexOf(arguments[0])
-        def jobArgsList = argsList[(index + 1)..<argsList.size()]
-        log.debug "arguments used in job $shortJobName after removing job name are $jobArgsList"
-        binding.args = jobArgsList as String[]
-
-        if (options.stacktrace) {
-            binding.stacktrace = true
-        }
-
-        assert metridocScript && metridocScript.exists(): "root script does not exist"
-        def thread = Thread.currentThread()
-
-        def shell = new GroovyShell(thread.contextClassLoader, binding)
-        thread.contextClassLoader = shell.classLoader
-        log.info "Running $metridocScript at ${new Date()}"
-        def response = null
-        def throwable
-        try {
-            response = shell.evaluate(metridocScript)
-        }
-        catch (Throwable badExecution) {
-            throwable = badExecution
-        }
-        log.info "Finished running $metridocScript at ${new Date()}"
-        if (throwable) throw throwable
-        return response
+        RunJobCommand command = new RunJobCommand(main: this)
+        command.run(options)
+        command.lastResult
     }
 
     @SuppressWarnings("GrMethodMayBeStatic")
@@ -264,39 +144,6 @@ class MetridocMain {
             System.setProperty(SHOW_THREAD_NAME_KEY, "false")
             System.setProperty(SHOW_LOG_NAME_KEY, "false")
         }
-    }
-
-    @SuppressWarnings(["GrMethodMayBeStatic", "GroovyAccessibility"])
-    protected void addDirectoryResourcesToClassPath(URLClassLoader loader, File file) {
-        def resourceDir = new File(file, "src${slash}main${slash}resources")
-        if (resourceDir.exists()) {
-            loader.addURL(resourceDir.toURI().toURL())
-        }
-        def groovyDir = new File(file, "src${slash}main${slash}groovy")
-        if (groovyDir.exists()) {
-            loader.addURL(groovyDir.toURI().toURL())
-        }
-
-        loader.addURL(file.toURI().toURL())
-    }
-
-    @SuppressWarnings("GrMethodMayBeStatic")
-    protected File getRootScriptFromDirectory(File directory, String shortName = null) {
-        if (shortName == null) {
-            def path = directory.canonicalPath
-            def index = path.lastIndexOf(SystemUtils.FILE_SEPARATOR)
-            shortName = getShortName(path.substring(index + 1))
-        }
-
-        def response
-
-        response = getFileFromDirectory(directory, "metridoc.groovy")
-        if (response) return response
-
-        response = getFileFromDirectory(directory, "${shortName}.groovy")
-        if (response) return response
-
-        return response
     }
 
     protected static File getFileFromDirectory(File directory, String fileName) {
@@ -341,19 +188,10 @@ class MetridocMain {
     }
 
     boolean doInstall(OptionAccessor options) {
-        def cliArgs = options.arguments()
-
-        def command = cliArgs[0]
-        if (command == "install") {
-            assert cliArgs.size() == 2: "when installing a job, [install] requires a location"
-            installJob(cliArgs[1])
-            return true
-        }
-
-        return false
+        new InstallJobCommand(main: this).run(options)
     }
 
-    protected File getJobDir(String jobName) {
+    File getJobDir(String jobName) {
         def fullJobName = jobName
         if (!fullJobName.startsWith("metridoc-job-")) {
             fullJobName = "metridoc-job-$jobName"
@@ -380,62 +218,17 @@ class MetridocMain {
     }
 
     protected boolean doHelp(CliBuilder cli, OptionAccessor options) {
-        def arguments = options.arguments()
-        File readme
-        if (arguments[0] == "help" && arguments.size() > 1) {
-            def jobName = arguments[1]
-            def file = new File(jobName)
-            def jobDir
-            if (file.exists()) {
-                if (file.isFile()) {
-                    jobDir = file.parentFile
-                }
-                else {
-                    jobDir = file
-                }
-            }
-            else {
-                jobDir = getJobDir(arguments[1])
-            }
-
-            readme = getFileFromDirectory(jobDir, "README")
-            if (readme) {
-                println readme.text
-            }
-            else {
-                println "README does not exist for $jobName"
-            }
-            return true
-        }
-
-        if (askingForHelp(options)) {
-            println ""
-            cli.usage()
-            println ""
-            def mdocVersion = this.class.classLoader.getResourceAsStream("MDOC_VERSION")
-            println "Currently using mdoc $mdocVersion"
-            println ""
-            return true
-        }
-
-        return false
+        new HelpCommand(main: this, cliBuilder: cli).run(options)
     }
 
     protected static boolean doInstallDeps(OptionAccessor options) {
-        options.arguments().contains("install-deps")
+        new InstallMdocDependenciesCommand().run(options)
     }
 
     protected static void checkForAndInstallDependencies(OptionAccessor options) {
-        if (!dependenciesExist()) {
-            InstallMdocDependencies.downloadDependencies()
+        if (!InstallMdocDependenciesCommand.dependenciesExist()) {
+            InstallMdocDependenciesCommand.downloadDependencies()
         }
-        else if (doInstallDeps(options)) {
-            println "Dependencies have already been installed"
-        }
-    }
-
-    protected static boolean askingForHelp(OptionAccessor options) {
-        !options.arguments() || options.help || options.arguments().contains("help")
     }
 
     protected List parseArgs() {
@@ -463,173 +256,5 @@ class MetridocMain {
             println "INFO: adding all jar files in [$options.lib] to classpath"
         }
         [options, cli]
-    }
-
-    URLClassLoader findHighestLevelClassLoader() {
-        def loader = this.class.classLoader
-
-        if (loader.rootLoader) {
-            return this.class.classLoader.rootLoader as URLClassLoader
-        }
-
-        def loaders = []
-        loaders << loader
-        while (loader.parent) {
-            loaders << loader.parent
-            loader = loader.parent
-        }
-        loaders = loaders.reverse()
-
-        for (it in loaders) {
-            if (it instanceof URLClassLoader) {
-                return it
-            }
-        }
-
-        throw new RuntimeException("Could not find a suitable classloader")
-    }
-
-    void addLibDirectories(URLClassLoader classLoader) {
-        libDirectories.each {
-            addJarsFromDirectory(classLoader, new File(it))
-        }
-    }
-
-    @SuppressWarnings("GroovyAccessibility")
-    static void addJarsFromDirectory(URLClassLoader classloader, File directory) {
-        if (directory.exists() && directory.isDirectory()) {
-            directory.eachFile(FileType.FILES) {
-                if (it.name.endsWith(".jar")) {
-                    classloader.addURL(it.toURI().toURL())
-                }
-            }
-        }
-    }
-
-    void installJob(String urlOrPath) {
-        def file = new File(urlOrPath)
-        def index = urlOrPath.lastIndexOf("/")
-        if (file.exists()) {
-            urlOrPath = file.canonicalPath
-            index = urlOrPath.lastIndexOf(SystemUtils.FILE_SEPARATOR)
-        }
-        def fileName = urlOrPath.substring(index + 1)
-        def destinationName = fileName
-
-        if (destinationName == "master.zip") {
-            def m = urlOrPath =~ /\/metridoc-job-(\w+)\//
-            if (m.find()) {
-                destinationName = "$LONG_JOB_PREFIX${m.group(1)}"
-            }
-        }
-
-        if (!destinationName.startsWith(LONG_JOB_PREFIX)) {
-            destinationName = "$LONG_JOB_PREFIX$destinationName"
-        }
-
-        def jobPathDir = new File("$jobPath")
-        if (!jobPathDir.exists()) {
-            jobPathDir.mkdirs()
-        }
-
-        def m = destinationName =~ /(metridoc-job-\w+)(-v?[0-9])?/
-        def destinationExists = m.lookingAt()
-        if (destinationExists) {
-            jobPathDir.eachFile(FileType.DIRECTORIES) {
-                def unversionedName = m.group(1)
-                if (it.name.startsWith(unversionedName)) {
-                    println "upgrading $destinationName"
-                    assert it.deleteDir(): "Could not delete $it"
-                }
-            }
-        }
-        else {
-            println "$destinationName does not exist, installing as new job"
-        }
-
-        def destination = new File(jobPathDir, destinationName)
-        def fileToInstall
-
-        try {
-            fileToInstall = new URL(urlOrPath)
-        }
-        catch (Throwable ignored) {
-            fileToInstall = new File(urlOrPath)
-            if (fileToInstall.exists() && fileToInstall.isDirectory()) {
-                installDirectoryJob(fileToInstall, destination)
-                return
-            }
-
-            def supported = fileToInstall.exists() && fileToInstall.isFile() && fileToInstall.name.endsWith(".zip")
-            if (!supported) {
-                println ""
-                println "$fileToInstall is not a zip file"
-                println ""
-                System.exit(2)
-            }
-        }
-
-        if (!destinationName.endsWith(".zip")) {
-            destinationName += ".zip"
-        }
-        destination = new File(jobPathDir, destinationName)
-        fileToInstall.withInputStream { inputStream ->
-            BufferedOutputStream outputStream = destination.newOutputStream()
-            try {
-                outputStream << inputStream
-            }
-            finally {
-                IOUtils.closeQuietly(outputStream)
-                //required so windows can successfully delete the file
-                System.gc()
-            }
-        }
-
-        ArchiveMethods.unzip(destination, jobPathDir)
-        def filesToDelete = []
-
-        jobPathDir.eachFile {
-            if (it.isFile() && it.name.endsWith(".zip")) {
-                filesToDelete << it
-            }
-        }
-
-        def log = LoggerFactory.getLogger(MetridocMain)
-
-        if(filesToDelete) {
-            log.debug "deleting [$filesToDelete]"
-        }
-        else {
-            log.debug "there are no files to delete"
-        }
-
-        filesToDelete.each {File fileToDelete ->
-            boolean successfulDelete = fileToDelete.delete()
-            if(successfulDelete) {
-                log.debug "successfully deleted ${fileToDelete}"
-            }
-            else {
-                log.warn "could not delete [${fileToDelete}], marking it for deletion after jvm shutsdown"
-                fileToDelete.deleteOnExit()
-            }
-        }
-    }
-
-    private static void installDirectoryJob(File file, File destination) {
-        FileUtils.copyDirectory(file, destination)
-    }
-
-    private static boolean dependenciesExist() {
-        dependenciesExistHelper("org.springframework.context.ApplicationContext")
-    }
-
-    private static boolean dependenciesExistHelper(String className) {
-        try {
-            Class.forName(className)
-            return true
-        }
-        catch (ClassNotFoundException ignored) {
-            return false
-        }
     }
 }

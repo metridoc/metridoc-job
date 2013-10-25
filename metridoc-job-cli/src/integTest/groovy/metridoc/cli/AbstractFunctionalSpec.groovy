@@ -38,6 +38,10 @@ class AbstractFunctionalSpec extends Specification {
         resetOutput()
 
         def mdocExecutablePath = System.getProperty("user.dir") + "/build/install/mdoc/bin/mdoc"
+        boolean inIntellij = !new File(mdocExecutablePath).exists()
+        if(inIntellij) {
+            mdocExecutablePath = System.getProperty("user.dir") + "/metridoc-job-cli" + "/build/install/mdoc/bin/mdoc"
+        }
         if(System.getProperty("os.name").contains("indows")) {
             mdocExecutablePath += ".bat"
         }
