@@ -19,12 +19,13 @@ package metridoc.cli
 
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
-import metridoc.utils.ArchiveMethods
 
 import java.util.concurrent.CountDownLatch
 
 @Slf4j
-class InstallMdocDependencies {
+class InstallMdocDependenciesCommand implements Command {
+
+    MetridocMain main
 
     static void downloadDependencies () {
         File destination = getDestination()
@@ -106,6 +107,35 @@ class InstallMdocDependencies {
     protected static String getFileName(String url) {
         int index = url.lastIndexOf("/")
         url.substring(index + 1)
+    }
+
+    @Override
+    boolean run(OptionAccessor options) {
+        def response = options.arguments().contains("install-deps")
+        if(!response) return false
+
+        if (!dependenciesExist()) {
+            downloadDependencies()
+        }
+        else {
+            println "Dependencies have already been installed"
+        }
+
+        return true
+    }
+
+    static boolean dependenciesExist() {
+        dependenciesExistHelper("org.apache.commons.mail.Email")
+    }
+
+    private static boolean dependenciesExistHelper(String className) {
+        try {
+            Class.forName(className)
+            return true
+        }
+        catch (ClassNotFoundException ignored) {
+            return false
+        }
     }
 }
 

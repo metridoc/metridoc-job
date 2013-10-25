@@ -20,6 +20,7 @@ package metridoc.cli
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.springframework.context.ApplicationContext
+import spock.lang.IgnoreRest
 import spock.lang.Specification
 
 /**
@@ -31,9 +32,27 @@ class MetridocMainSpec extends Specification {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder()
 
+    /**
+     * helps make things work in intellij
+     *
+     * @param directory
+     * @return
+     */
+    String normalizePath(String directory) {
+        boolean inIntellij = !new File(directory).exists()
+        if (inIntellij) {
+            def directoryInIntellij = "metridoc-job-cli/$directory"
+            assert new File(directoryInIntellij).exists(): "directory [$directory] or [$directoryInIntellij] cannot " +
+                    "be found"
+            return directoryInIntellij
+        }
+
+        return directory
+    }
+
     void "test running a script"() {
         given:
-        def args = ["--stacktrace", "src/test/testJobs/script/simpleScript.groovy", "--mergeMetridocConfig=false",
+        def args = ["--stacktrace", normalizePath("src/test/testJobs/script/simpleScript.groovy"), "--mergeMetridocConfig=false",
                 "--embeddedDataSource"]
         def main = new MetridocMain(args: args)
 
@@ -41,13 +60,13 @@ class MetridocMainSpec extends Specification {
         def result = main.run()
 
         then:
-        "simpleScript ran" == result
         noExceptionThrown()
+        "simpleScript ran" == result
     }
 
     void "test running a simple job"() {
         given:
-        def args = ["--stacktrace", "src/test/testJobs/simpleJob", "--mergeMetridocConfig=false",
+        def args = ["--stacktrace", normalizePath("src/test/testJobs/simpleJob"), "--mergeMetridocConfig=false",
                 "--embeddedDataSource"]
         def main = new MetridocMain(args: args)
 
@@ -62,7 +81,7 @@ class MetridocMainSpec extends Specification {
     void "test running a complex job"() {
         given:
         def args = ["foo", "--stacktrace"]
-        def main = new MetridocMain(args: args, jobPath: "src/test/testJobs/complexJob")
+        def main = new MetridocMain(args: args, jobPath: normalizePath("src/test/testJobs/complexJob"))
 
         when:
         def result = main.run()
@@ -72,9 +91,9 @@ class MetridocMainSpec extends Specification {
         "complex foo project ran" == result
     }
 
-    void "test running a complex job from a directory" () {
+    void "test running a complex job from a directory"() {
         given:
-        def args = ["src/test/testJobs/complexJob/metridoc-job-foo-0.1"]
+        def args = [normalizePath("src/test/testJobs/complexJob/metridoc-job-foo-0.1")]
         def main = new MetridocMain(args: args)
 
         when:
@@ -87,7 +106,7 @@ class MetridocMainSpec extends Specification {
 
     void "test installing and running a job"() {
         given:
-        def args = ["install", new File("src/test/testJobs/metridoc-job-bar-0.1.zip").toURI().toURL().toString()]
+        def args = ["install", new File(normalizePath("src/test/testJobs/metridoc-job-bar-0.1.zip")).toURI().toURL().toString()]
         def main = new MetridocMain(args: args, jobPath: folder.getRoot().toString())
 
         when:
@@ -95,35 +114,12 @@ class MetridocMainSpec extends Specification {
 
         then:
         noExceptionThrown()
-        folder.root.listFiles().find {it.name == "metridoc-job-bar-0.1"}
+        folder.root.listFiles().find { it.name == "metridoc-job-bar-0.1" }
         0 < folder.root.listFiles().size()
         if (!System.getProperty("os.name").contains("indows")) {
             //cannot for the life of me figure out how to delete the copied zip file
             1 == folder.root.listFiles().size()
         }
-    }
-
-    void "test check for whether or not we should install dependencies"() {
-        given:
-        boolean answer
-
-        when:
-        answer = MetridocMain.dependenciesExistHelper("java.lang.String")
-
-        then:
-        answer
-
-        when:
-        answer = MetridocMain.dependenciesExistHelper("foo.bar.DoesNotExist")
-
-        then:
-        !answer
-
-        when: "calling installDependencies by default"
-        answer = new MetridocMain().dependenciesExist()
-
-        then: "the answer should be false since all dependencies will be available during unit tests"
-        answer
     }
 
     void "test extracting short name from long name"() {
@@ -139,7 +135,7 @@ class MetridocMainSpec extends Specification {
 
     void "test grabbing a file from a directory"() {
         when:
-        def readme = new MetridocMain().getFileFromDirectory(new File("src/test/testJobs/complexJob/metridoc-job-foo-0.1"), "README")
+        def readme = new MetridocMain().getFileFromDirectory(new File(normalizePath("src/test/testJobs/complexJob/metridoc-job-foo-0.1")), "README")
 
         then:
         readme.exists()
@@ -148,7 +144,7 @@ class MetridocMainSpec extends Specification {
 
     void "any args using -D get pushed to system properties"() {
         when:
-        new MetridocMain(args:["-Dfoo=bar", "-DfooBar"] as String[]).run() //it will print help
+        new MetridocMain(args: ["-Dfoo=bar", "-DfooBar"] as String[]).run() //it will print help
 
         then:
         "bar" == System.getProperty("foo")
@@ -159,9 +155,9 @@ class MetridocMainSpec extends Specification {
         when:
         new MetridocMain(
                 exitOnFailure: false,
-                args:[
-                    "src/test/testJobs/script/errorScript.groovy",
-                    "--stacktrace"
+                args: [
+                        normalizePath("src/test/testJobs/script/errorScript.groovy"),
+                        "--stacktrace"
                 ] as String[]).run()
 
         then: "exception will be thrown instead of just printing it"
