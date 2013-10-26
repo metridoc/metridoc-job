@@ -62,7 +62,7 @@ dependencies {
             "org.spockframework:spock-core:0.7-groovy-2.0"
 }
 
-task publishDistribution << {
+task publishDistribution(depends: "installApp") << {
     assert project.hasProperty("bintrayUsername") && project.hasProperty("bintrayPassword") : "bintray credentials " +
             "not set"
 
