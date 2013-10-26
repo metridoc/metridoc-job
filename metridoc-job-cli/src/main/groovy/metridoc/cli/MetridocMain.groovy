@@ -72,6 +72,8 @@ class MetridocMain {
 
             if (exitOnFailure) {
                 System.exit(1)
+            } else {
+                throw ignored
             }
         }
     }

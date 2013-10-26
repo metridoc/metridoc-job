@@ -30,31 +30,41 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 @CompileStatic
 class ArchiveMethods {
 
-    /**
-     * Unzips a file to a target directory, retaining the file permissions where
-     * possible. You can also provide a closure that acts as a filter, returning
-     * {@code true} if you want the file or directory extracted, {@code false}
-     * otherwise.
-     * @param self The zip file to extract.
-     * @param destination The directory to extract the zip to. Of course, it must
-     * be a directory, otherwise this method throws an IllegalArgumentException.
-     * @param filter (optional) A closure that acts as a filter. It must accept a
-     * single argument that is a File and return {@code true} if that zip entry
-     * should be extracted, or {@code false} otherwise.
-     */
-    static Collection<File> unzip (File self, File destination, Closure<Boolean> filter = null) {
+    static Collection<File> unzip (File self, File destination, String topDirectory, Closure<Boolean> filter = null) {
         checkUnzipFileType(self)
         checkUnzipDestination(destination)
+
+        def zipFile = new ZipFile(self)
+        //let's make sure top directory exists
+        List entries = zipFile.entries as List<ZipArchiveEntry>
+        if (topDirectory) {
+            boolean foundTopDir = entries.find {ZipArchiveEntry entry ->
+                def name = entry.name
+                name.endsWith("$topDirectory/")
+            } != null
+
+            assert foundTopDir : "Could not find job [$topDirectory] in zipFile [$self]"
+        }
 
         // if destination directory is not given, we'll fall back to the parent directory of 'self'
         if (destination == null) destination = new File(self.parent)
 
         def unzippedFiles = []
-        def zipFile = new ZipFile(self)
 
         // The type coercion here is down to http://jira.codehaus.org/browse/GROOVY-6123
         for (ZipArchiveEntry entry in (zipFile.entries as List<ZipArchiveEntry>)) {
-            final file = new File(destination, entry.name)
+            def usedName = entry.name
+
+            if(topDirectory) {
+                if(!usedName.contains(topDirectory)) {
+                    continue
+                }
+                else {
+                    def index = usedName.indexOf(topDirectory)
+                    usedName = usedName.substring(index)
+                }
+            }
+            def file = new File(destination, usedName)
             if (filter == null || filter(file)) {
                 if (!entry.isDirectory())  {
                     file.parentFile?.mkdirs()
@@ -80,6 +90,22 @@ class ArchiveMethods {
         }
 
         return unzippedFiles
+    }
+
+    /**
+     * Unzips a file to a target directory, retaining the file permissions where
+     * possible. You can also provide a closure that acts as a filter, returning
+     * {@code true} if you want the file or directory extracted, {@code false}
+     * otherwise.
+     * @param self The zip file to extract.
+     * @param destination The directory to extract the zip to. Of course, it must
+     * be a directory, otherwise this method throws an IllegalArgumentException.
+     * @param filter (optional) A closure that acts as a filter. It must accept a
+     * single argument that is a File and return {@code true} if that zip entry
+     * should be extracted, or {@code false} otherwise.
+     */
+    static Collection<File> unzip (File self, File destination, Closure<Boolean> filter = null) {
+        unzip(self, destination, null, filter)
     }
 
     /**

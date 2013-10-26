@@ -23,15 +23,22 @@ class InstallJobCommand implements Command {
 
         def command = cliArgs[0]
         if (command == "install") {
-            assert cliArgs.size() == 2: "when installing a job, [install] requires a location"
-            installJob(cliArgs[1])
+            assert cliArgs.size() == 2 || cliArgs.size() == 3: "when installing a job, " +
+                    "[install] requires a location and optionally a sub directory in a zip file"
+            if (cliArgs.size() == 1) {
+                installJob(cliArgs[1], null)
+            }
+            else {
+                installJob(cliArgs[1], cliArgs[2])
+            }
+
             return true
         }
 
         return false
     }
 
-    void installJob(String urlOrPath) {
+    void installJob(String urlOrPath, String optionSubDirectory) {
         def file = new File(urlOrPath)
         def index = urlOrPath.lastIndexOf("/")
         if (file.exists()) {
@@ -110,7 +117,7 @@ class InstallJobCommand implements Command {
             }
         }
 
-        ArchiveMethods.unzip(destination, jobPathDir)
+        ArchiveMethods.unzip(destination, jobPathDir, optionSubDirectory)
         def filesToDelete = []
 
         jobPathDir.eachFile {

@@ -14,16 +14,17 @@
 
 import foo.FooBar
 import metridoc.core.MetridocScript
-import metridoc.tool.gorm.GormTool
+import metridoc.service.gorm.GormService
 /**
  * Created with IntelliJ IDEA on 9/7/13
  * @author Tommy Barker
  */
 use(MetridocScript) {
-    def gorm = includeTool(embeddedDataSource: true, GormTool)
-    gorm.enableGormFor(FooBar)
+    def gorm = includeService(embeddedDataSource: true, GormService)
+    gorm.enableFor(FooBar)
     FooBar.list()
 }
 
+return "gorm ran"
 
 
