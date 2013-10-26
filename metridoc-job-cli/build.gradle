@@ -70,6 +70,7 @@ task publishDistribution << {
         // Add basic authentication header.
         setRequestProperty "Authorization", "Basic " + "$bintrayUsername:$bintrayPassword".getBytes().encodeBase64().toString()
         doOutput = true
+        artifactFile = distZip.archivePath
         fixedLengthStreamingMode = artifactFile.size()
         requestMethod = "PUT"
 

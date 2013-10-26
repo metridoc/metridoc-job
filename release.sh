@@ -15,8 +15,6 @@ if grep -q "\-SNAPSHOT" "VERSION"; then
     exit 0
 fi
 
-systemCall "./gradlew test integTests"
-
 #releases to github
 PROJECT_VERSION=`cat VERSION`
 echo ""
