@@ -18,15 +18,6 @@ class RunJobCommand implements Command {
 
     @Override
     synchronized boolean run(OptionAccessor options) {
-        if (!options.plainText) {
-            AnsiConsole.systemInstall()
-            System.out = new JansiPrintWriter(System.out)
-            System.err = new JansiPrintWriter(System.err)
-            Thread.addShutdownHook {
-                AnsiConsole.systemUninstall()
-            }
-        }
-
         def arguments = options.arguments()
         def shortJobName = arguments[0]
 

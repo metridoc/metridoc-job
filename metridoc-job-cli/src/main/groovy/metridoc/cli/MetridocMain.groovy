@@ -19,9 +19,7 @@ package metridoc.cli
 
 import groovy.io.FileType
 import metridoc.utils.JansiPrintWriter
-import org.apache.commons.lang.SystemUtils
 import org.fusesource.jansi.AnsiConsole
-import org.slf4j.LoggerFactory
 
 /**
  * Created with IntelliJ IDEA on 8/5/13
@@ -118,6 +116,15 @@ class MetridocMain {
 
     @SuppressWarnings("GrMethodMayBeStatic")
     protected void setupLogging(OptionAccessor options) {
+        if (!options.plainText) {
+            AnsiConsole.systemInstall()
+            System.out = new JansiPrintWriter(System.out)
+            System.err = new JansiPrintWriter(System.err)
+            Thread.addShutdownHook {
+                AnsiConsole.systemUninstall()
+            }
+        }
+
         def simpleLoggerClass
         try {
             simpleLoggerClass = Thread.currentThread().contextClassLoader.loadClass("org.slf4j.impl.SimpleLogger")
