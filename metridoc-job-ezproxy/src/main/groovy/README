@@ -1,0 +1,64 @@
+
+###############
+# Ezproxy Job #
+###############
+
+Usage: mdoc [mdoc options] ezproxy <ezproxy job> [job options]
+
+Available Jobs
+--------------
+  processHosts  processes a given file, storing all unique host names by
+             	ezproxy id
+
+  processDois   processes a given file, storing all uniques dois by ezproxy
+                id
+
+  resolveDois   iterates through all dois that have been ingested and attempts
+                to resolve bibliographic information from cross ref
+
+  dropTables    drops all loading tables.  Sometimes this is needed after
+                upgrades to deal with changing schemas
+
+Options By Job
+--------------
+
+  processEzHosts and processDois
+
+    pick one of:
+
+        -file       the file to process
+
+        -directory  the directory of ezproxy files to process.  Only one file
+                    per run will be processed
+
+        -url        a camel url that handles files such as sftp. One file from
+                    location is processed
+
+    others:
+
+        -preview            allows user to preview data BEFORE ingestion
+
+        -encryptPatronId    encrypts patronId with SHA256
+
+        -encryptIpAddress   encrypts ipAddress with SHA256
+
+        -delimiter          line delimiter, if file is double piped delimited
+                            this would \|\|
+
+    positional parameters:
+
+        Each flag will contain a number which represents the 0 based position
+        of an item in a line after the delimiter has been applied.  Positional
+        parameters include:
+
+        patronId, country, ipAddress, state, city, rank, department, ezproxyId,
+        url, proxyDate
+
+Example Call
+------------
+
+    mdoc ezproxy processHosts -directory=/Work/sampleEzproxyLogs \
+        -delimiter='\|\|' -ezproxyId=13 -ipAddress=0 -url=8 -country=3 \
+        -city=1 -patronId=5 -proxyDate=6 -state=2 -fileFilter=ezproxy.log.* \
+        -stacktrace -localMysql
+
