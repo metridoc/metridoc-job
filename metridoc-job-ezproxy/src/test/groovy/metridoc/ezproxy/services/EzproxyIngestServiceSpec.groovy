@@ -13,7 +13,7 @@ class EzproxyIngestServiceSpec extends Specification {
         given:
         GormService gormService = new GormService(embeddedDataSource: true)
         gormService.init()
-        gormService.enableGormFor(EzHosts)
+        gormService.enableFor(EzHosts)
         EzproxyService ezService = new EzproxyService(entityClass: EzHosts)
         def ingestService = new EzproxyIngestService(ezproxyService: ezService)
         Binding binding = ingestService.binding

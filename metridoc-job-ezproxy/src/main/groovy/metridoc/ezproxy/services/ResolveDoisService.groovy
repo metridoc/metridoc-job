@@ -2,11 +2,10 @@ package metridoc.ezproxy.services
 
 import groovy.util.logging.Slf4j
 import metridoc.core.InjectArgBase
-import metridoc.core.services.RunnableService
+import metridoc.core.Step
 import metridoc.ezproxy.entities.EzDoi
 import metridoc.ezproxy.entities.EzDoiJournal
 import metridoc.ezproxy.utils.TruncateUtils
-import metridoc.service.gorm.GormService
 
 /**
  * Created with IntelliJ IDEA on 9/24/13
@@ -14,22 +13,16 @@ import metridoc.service.gorm.GormService
  */
 @InjectArgBase("ezproxy")
 @Slf4j
-class ResolveDoisService extends RunnableService {
+class ResolveDoisService {
 
     int doiResolutionCount = 2000
     boolean stacktrace = false
     boolean use4byte = false
     String fourByteReplacement = "_?_"
+    CrossRefService crossRefService
 
+    @Step(description = "resolves dois against crossref")
     void resolveDois() {
-        def gormService = includeService(GormService)
-        try {
-            gormService.enableFor(EzDoiJournal, EzDoi)
-        }
-        catch (IllegalStateException ignore) {
-            //in case we already enabled the classes
-        }
-
         EzDoi.withTransaction {
 
             List ezDois = EzDoi.findAllByProcessedDoi(false, [max: doiResolutionCount])
@@ -42,9 +35,8 @@ class ResolveDoisService extends RunnableService {
                 return
             }
 
-            CrossRefService crossRefTool = includeService(CrossRefService)
             ezDois.each { EzDoi ezDoi ->
-                def response = crossRefTool.resolveDoi(ezDoi.doi)
+                def response = crossRefService.resolveDoi(ezDoi.doi)
                 try {
                     processResponse(response, ezDoi)
                 }
@@ -119,13 +111,6 @@ class ResolveDoisService extends RunnableService {
                 ezDoiJournal."$key" = chosenValue
             }
         }
-    }
-
-    @Override
-    def configure() {
-        step(resolveDois: "resolve dois")
-
-        setDefaultTarget("resolveDois")
     }
 
     /**

@@ -1,10 +1,13 @@
 import metridoc.core.services.ConfigService
 import metridoc.ezproxy.entities.EzDoi
+import metridoc.ezproxy.entities.EzDoiJournal
 import metridoc.ezproxy.entities.EzHosts
+import metridoc.ezproxy.services.CrossRefService
 import metridoc.ezproxy.services.EzproxyDropTableService
 import metridoc.ezproxy.services.EzproxyService
 import metridoc.ezproxy.services.EzproxyWireService
 import metridoc.ezproxy.services.ResolveDoisService
+import metridoc.service.gorm.GormService
 
 includeService(ConfigService)
 assert argsMap: "no arguments were provided, run [mdoc help ezproxy]"
@@ -31,7 +34,10 @@ switch (command) {
         return
     case "resolveDois":
         println "resolving dois"
-        includeService(ResolveDoisService).execute()
+        includeService(GormService).enableFor(EzDoiJournal, EzDoi)
+        includeService(CrossRefService)
+        includeService(ResolveDoisService)
+        runStep("resolveDois")
         return
     case "dropTables":
         println "dropping tables"
