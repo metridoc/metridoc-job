@@ -1,12 +1,13 @@
 package metridoc.ezproxy.services
 
+import groovy.stream.Stream
 import groovy.util.logging.Slf4j
 import metridoc.core.InjectArgBase
 import metridoc.core.services.CamelService
 import metridoc.core.services.DataSourceService
 import metridoc.core.services.DefaultService
+import metridoc.ezproxy.entities.EzproxyBase
 import metridoc.service.gorm.GormService
-import metridoc.tool.gorm.GormIteratorWriter
 import org.apache.camel.util.URISupport
 import org.hibernate.Session
 
@@ -20,104 +21,168 @@ import java.util.zip.GZIPInputStream
 @Slf4j
 class EzproxyIngestService extends DefaultService {
 
-    EzproxyService ezproxyService
+    EzproxyStepsService ezproxyService
     CamelService camelService
     long waitForFile = 1000 * 60 * 3 //3 minutes
     boolean preview
+    public static final String FILE_FILTER_IS_NULL = "ezproxy file filter cannot be null"
+    public static final String EZ_DIRECTORY_IS_NULL = 'ezproxy directory or camelUrl must not be null'
+    public static final String DEFAULT_FILE_FILTER = "ezproxy*"
+    public static final Closure<String> EZ_DIRECTORY_DOES_NOT_EXISTS = { "ezproxy directory ${it} does not exist" as String }
+    public static final Closure<String> EZ_FILE_DOES_NOT_EXIST = { "ezproxy file $it does not exist" as String }
+
+    String fileFilter = DEFAULT_FILE_FILTER
+    File directory
+    File file
+    String camelUrl
+    Class<? extends EzproxyBase> entityClass
 
     void ingestData() {
-
-        setupWriter()
+        validateInputs()
+        checkConnection()
 
         String fileUrl = createFileUrl()
 
-        ezproxyService.with {
-            def usedUrl = camelUrl ?: fileUrl
-            //this creates a file transaction
-            def sanitizedUrl = URISupport.sanitizeUri(usedUrl)
-            log.info "consuming from [${sanitizedUrl}]"
-            boolean atLeastOneFileProcessed = false
-            camelService.consumeWait(usedUrl, waitForFile) { File file ->
-                ezproxyService.file = file
-                if (ezproxyService.file) {
-                    atLeastOneFileProcessed = true
-                    log.info "processing file $file"
-                    ezproxyService.with {
-                        ezproxyIterator.validateInputs()
-                        if (preview) {
-                            ezproxyIterator.preview()
-                            return
-                        }
+        def usedUrl = camelUrl ?: fileUrl
+        //this creates a file transaction
+        def sanitizedUrl = URISupport.sanitizeUri(usedUrl)
+        log.info "consuming from [${sanitizedUrl}]"
+        boolean atLeastOneFileProcessed = false
+        camelService.consumeWait(usedUrl, waitForFile) { File file ->
 
-                        writerResponse = writer.write(ezproxyIterator)
-                        if (writerResponse.fatalErrors) {
-                            throw writerResponse.fatalErrors[0]
-                        }
-                    }
+            if (file) {
+                atLeastOneFileProcessed = true
+                log.info "processing file $file"
+                def ezproxyIterator = getEzproxyIterator(file)
+                ezproxyIterator.validateInputs()
+                if (preview) {
+                    ezproxyIterator.preview()
+                    return
+                }
+                else {
+                    doIngest(ezproxyIterator, entityClass)
                 }
             }
+        }
 
-            if(!atLeastOneFileProcessed) {
-                log.info "no files were processed, if this is unexpected, consider extending the wait time to retrieve the file\n" +
-                        "  command line: use --waitForFile=<milliseconds>"
-                "  config file: use ezproxy.waitForFile=<milliseconds>"
-            }
+        if (!atLeastOneFileProcessed) {
+            log.info "no files were processed, if this is unexpected, consider extending the wait time to retrieve the file\n" +
+                    "  command line: use --waitForFile=<milliseconds>"
+            "  config file: use ezproxy.waitForFile=<milliseconds>"
         }
 
         camelService.close()
     }
 
-    protected void setupWriter() {
-        ezproxyService.with {
-            if (!writer) {
-                writer = new GormIteratorWriter(gormClass: entityClass)
+    protected void checkConnection() {
+        if (!preview) {
+            DataSourceService gormService = includeService(GormService)
+
+            try {
+                gormService.enableFor(entityClass)
+            }
+            catch (IllegalStateException ignored) {
+                //do nothing, already enabled
             }
 
-            if (writer instanceof GormIteratorWriter && !preview) {
-                DataSourceService gormService = includeService(GormService)
-
-                try {
-                    gormService.enableFor(entityClass)
-                }
-                catch (IllegalStateException ignored) {
-                    //do nothing, already enabled
-                }
-
-                entityClass.withNewSession { Session session ->
-                    def url = session.connection().metaData.getURL()
-                    log.info "connecting to ${url}"
-                }
+            entityClass.withNewSession { Session session ->
+                def url = session.connection().metaData.getURL()
+                log.info "connecting to ${url}"
             }
-
         }
     }
 
-    protected EzproxyIteratorService getEzproxyIterator() {
-        def ezproxyIteratorService = getVariable("ezproxyIteratorService", EzproxyIteratorService)
-        if (ezproxyIteratorService) return ezproxyIteratorService
+    protected static List doIngest(EzproxyIteratorService ezproxyIteratorService,
+                                   Class<? extends EzproxyBase> entity) {
+        Map stats = [
+                ignored: 0,
+                written: 0
+        ]
 
-        def inputStream = ezproxyService.file.newInputStream()
-        def fileName = ezproxyService.file.name
+        def helperInstance = entity.newInstance()
+        def entitiesSaved = []
+        Set<String> naturalKeyCache = [] as Set
+        int counter = 1
+        entity.withTransaction {
+            Stream.from(ezproxyIteratorService).map {
+                if (counter % 10000 == 0) {
+                    owner.log.info "procesed [$counter] records with stats [$stats]"
+                }
+                counter++
+                return it
+            }.filter {
+                boolean result
+                if (it.exception) {
+                    result = false
+                }
+                else {
+                    result = helperInstance.acceptRecord(it)
+                }
+                if (!result) {
+                    stats.ignored = stats.ignored + 1
+                }
+
+                return result
+            }.map {
+                def instance = entity.newInstance()
+                instance.populate(it)
+                stats.written = stats.written + 1
+                instance.naturalKeyCache = naturalKeyCache
+                return instance
+            }.filter { EzproxyBase base ->
+                def response = base.shouldSave()
+                if (!response) {
+                    stats.written = stats.written - 1
+                    stats.ignored = stats.ignored + 1
+                }
+                return response
+            }.each { EzproxyBase base ->
+                base.save(failOnError: true)
+                entitiesSaved << base
+            }
+
+            counter--
+            log.info "finished procesing [$counter] records with stats [$stats]"
+            assert counter == stats.written + stats.ignored: "stats and total lines processed don't match"
+        }
+
+        return [stats, entitiesSaved]
+    }
+
+    protected EzproxyIteratorService getEzproxyIterator(File file) {
+        def inputStream = file.newInputStream()
+        def fileName = file.name
         if (fileName.endsWith(".gz")) {
             inputStream = new GZIPInputStream(inputStream)
         }
-        def service = includeService(EzproxyIteratorService, inputStream: inputStream, file: ezproxyService.file)
+        def service = includeService(EzproxyIteratorService, inputStream: inputStream, file: file)
         return service
     }
 
     protected String createFileUrl() {
         String fileUrl
-        ezproxyService.with {
-            if (file) {
-                assert file.exists(): "$file does not exist"
-                directory = new File(file.parent)
-            }
+        if (file) {
+            assert file.exists(): "$file does not exist"
+            directory = new File(file.parent)
+        }
 
-            long readLockTimeout = 1000 * 60 * 60 * 24 //one day
-            if (directory) {
-                fileUrl = "${directory.toURI().toURL()}?noop=true&readLockTimeout=${readLockTimeout}&antInclude=${fileFilter}&sendEmptyMessageWhenIdle=true&filter=#ezproxyFileFilter"
-            }
+        long readLockTimeout = 1000 * 60 * 60 * 24 //one day
+        if (directory) {
+            fileUrl = "${directory.toURI().toURL()}?noop=true&readLockTimeout=${readLockTimeout}&antInclude=${fileFilter}&sendEmptyMessageWhenIdle=true&filter=#ezproxyFileFilter"
         }
         fileUrl
+    }
+
+    void validateInputs() {
+        if (!file) {
+            assert fileFilter: FILE_FILTER_IS_NULL
+            assert directory || camelUrl: EZ_DIRECTORY_IS_NULL
+            if (directory) {
+                assert directory.exists(): EZ_DIRECTORY_DOES_NOT_EXISTS(directory)
+            }
+        }
+        else {
+            assert file.exists(): EZ_FILE_DOES_NOT_EXIST(file)
+        }
     }
 }

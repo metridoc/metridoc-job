@@ -1,7 +1,4 @@
 package metridoc.ezproxy.utils
-
-import metridoc.iterators.Record
-
 /**
  * @author Tommy Barker
  */
@@ -10,14 +7,14 @@ class TruncateUtils {
     public static final DEFAULT_EZPROXY_ID_LENGTH = 50
 
     @SuppressWarnings("GrMethodMayBeStatic")
-    static void truncateProperties(Record record, String... propertyNames) {
+    static void truncateProperties(Map body, String... propertyNames) {
         propertyNames.each { propertyName ->
-            def propertyValue = record.body[propertyName]
+            def propertyValue = body[propertyName]
             if(propertyName == "ezproxyId") {
-                record.body[propertyName] = truncate(propertyValue, DEFAULT_EZPROXY_ID_LENGTH)
+                body[propertyName] = truncate(propertyValue, DEFAULT_EZPROXY_ID_LENGTH)
             }
             else if (propertyValue && propertyValue instanceof String) {
-                record.body[propertyName] = truncate(propertyValue, DEFAULT_VARCHAR_LENGTH)
+                body[propertyName] = truncate(propertyValue, DEFAULT_VARCHAR_LENGTH)
             }
         }
     }

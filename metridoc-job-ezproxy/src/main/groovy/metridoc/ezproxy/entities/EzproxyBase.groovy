@@ -2,7 +2,6 @@ package metridoc.ezproxy.entities
 
 import com.sun.xml.internal.ws.util.StringUtils
 import groovy.util.logging.Slf4j
-import metridoc.iterators.Record
 import metridoc.utils.ApacheLogParser
 import org.slf4j.LoggerFactory
 
@@ -23,9 +22,10 @@ abstract class EzproxyBase {
     String fileName
     String urlHost
     Integer lineNumber
+    boolean failedPopulate = false
     Set<String> naturalKeyCache = []
 
-    static transients = ['naturalKeyCache', 'fieldsToLoad']
+    static transients = ['naturalKeyCache', 'fieldsToLoad', 'failedPopulate']
 
     static constraints = {
         ezproxyId(maxSize: 50)
@@ -52,46 +52,43 @@ abstract class EzproxyBase {
         clone.call(it)
     }
 
-    boolean acceptRecord(Record record) {
-        log.debug  "checking to accept record {}", record
-        def cache = record.getHeader(NATURAL_KEY_CACHE, Set)
-        if (cache) {
-            naturalKeyCache = cache
-        }
-        else {
-            cache = [] as Set<String>
-            record.headers[NATURAL_KEY_CACHE] = cache
-            naturalKeyCache = cache
-        }
+    boolean acceptRecord(Map body) {
+        log.debug  "checking to accept record {}", body
 
-        boolean result = record.body.ezproxyId &&
-                record.body.urlHost
+        boolean result = body.ezproxyId &&
+                body.urlHost
 
         if (!result) {
-            log.debug "record {} was rejected", record
+            log.debug "record {} was rejected", body
             return false
         }
 
-        truncateProperties(record, "ezproxyId", "fileName", "urlHost")
-        addDateValues(record.body)
+        truncateProperties(body, "ezproxyId", "fileName", "urlHost")
+        addDateValues(body)
 
-        log.debug "record {} was accepted", record
+        log.debug "record {} was accepted", body
         return result
     }
 
-    void populate(Record record) {
-        log.debug "populating {}", record
+    void populate(Map body) {
+        log.debug "populating {}", body
 
-        def dataOfInterest = record.body.findAll {
+        def dataOfInterest = body.findAll {
             String propertyName = StringUtils.capitalize(it.key)
             this.metaClass.respondsTo(this, "set${propertyName}", [it.value.getClass()] as Object[])
         }
 
         dataOfInterest.each {
             log.debug "updating property [$it.key] with [$it.value]"
-            this."$it.key" = it.value
+            try {
+                this."$it.key" = it.value
+            }
+            catch (Throwable throwable) {
+                log.warn "Could not store ${it.key}", throwable
+                failedPopulate = true
+            }
         }
-        log.debug "finished populating {}", record
+        log.debug "finished populating {}", body
     }
 
     protected void addDateValues(Map record) {
@@ -131,7 +128,9 @@ abstract class EzproxyBase {
 
     @Override
     boolean shouldSave() {
-
+        if(failedPopulate) {
+            return false
+        }
         String naturalKey = createNaturalKey()
         if (naturalKeyCache.add(naturalKey)) {
             def doesNotExist = !alreadyExists()
@@ -140,8 +139,14 @@ abstract class EzproxyBase {
                 if (!this.validate()) {
                     log.debug "[$this] is invalid"
                     if (this.errors.fieldErrorCount) {
-                        def message = "error on field [${this.errors.fieldError.field}] with error code [${this.errors.fieldError.code}]"
-                        throw new AssertionError(message)
+                        def message = """
+error on field [${this.errors.fieldError.field}] with error code [${this.errors.fieldError.code}]
+    file: $fileName,
+    line: $lineNumber
+"""
+                        log.warn message
+                        log.debug "[{}] will not be saved", naturalKey
+                        return false
                     }
                     else {
                         throw new RuntimeException("unknown error occurred \n ${this.errors}")

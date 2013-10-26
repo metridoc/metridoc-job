@@ -4,7 +4,7 @@ import metridoc.ezproxy.entities.EzDoiJournal
 import metridoc.ezproxy.entities.EzHosts
 import metridoc.ezproxy.services.CrossRefService
 import metridoc.ezproxy.services.EzproxyDropTableService
-import metridoc.ezproxy.services.EzproxyService
+import metridoc.ezproxy.services.EzproxyStepsService
 import metridoc.ezproxy.services.EzproxyWireService
 import metridoc.ezproxy.services.ResolveDoisService
 import metridoc.service.gorm.GormService
@@ -56,6 +56,6 @@ void ingestFor(Class ezproxyIngestClass) {
     }
 }
 
-EzproxyService wireupServices(Class ezproxyIngestClass) {
+EzproxyStepsService wireupServices(Class ezproxyIngestClass) {
     return includeService(EzproxyWireService).wireupServices(ezproxyIngestClass)
 }
