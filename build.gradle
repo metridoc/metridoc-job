@@ -7,7 +7,8 @@ def versionForSubProjects = new File(project.projectDir, "VERSION").text
 subprojects {
     apply plugin: 'groovy'
     project.ext.archivesBaseName = project.name
-    if(project.name != "metridoc-job-cli") {
+    def mavenExclusions = ["metridoc-job-cli", "metridoc-job-ezproxy"]
+    if(!mavenExclusions.contains(project.name)) {
         apply plugin: 'maven'
 
         project.ext.set("enableMaven") { Closure configurePom ->
