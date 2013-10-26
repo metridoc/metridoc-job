@@ -1,7 +1,6 @@
 package metridoc.ezproxy.entities
 
 import grails.persistence.Entity
-import metridoc.iterators.Record
 import org.slf4j.LoggerFactory
 
 import java.util.regex.Pattern
@@ -28,14 +27,13 @@ class EzDoi extends EzproxyBase {
         doi(index: true)
     }
 
-    boolean acceptRecord(Record record) {
-        boolean hasEzproxyIdAndHost = super.acceptRecord(record)
+    boolean acceptRecord(Map body) {
+        boolean hasEzproxyIdAndHost = super.acceptRecord(body)
 
         if(!hasEzproxyIdAndHost) {
             return false
         }
 
-        def body = record.body
         try {
             if (hasDoi(body)) {
                 body.doi = extractDoi(body.url)
@@ -49,7 +47,7 @@ class EzDoi extends EzproxyBase {
             def log = LoggerFactory.getLogger(EzDoi)
             log.warn "Could not extract doi from $body.url", throwable
         }
-        truncateProperties(record, "doi")
+        truncateProperties(body, "doi")
         return body.doi != null
     }
 

@@ -3,8 +3,7 @@ package metridoc.ezproxy.services
 import groovy.util.logging.Slf4j
 import metridoc.core.InjectArg
 import metridoc.core.InjectArgBase
-import metridoc.iterators.FileIterator
-import metridoc.iterators.Record
+import metridoc.stream.FileStream
 import metridoc.utils.ApacheLogParser
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.LineIterator
@@ -16,7 +15,7 @@ import org.apache.commons.io.LineIterator
  */
 @Slf4j
 @InjectArgBase("ezproxy")
-class EzproxyIteratorService extends FileIterator {
+class EzproxyIteratorService extends FileStream<Map> {
     public static final transient APACHE_NULL = "-"
     boolean encryptPatronId = false
     boolean encryptIpAddress = false
@@ -34,19 +33,18 @@ class EzproxyIteratorService extends FileIterator {
     String delimiter
     int maxLines = 0
 
-    Closure parser = {String line ->
+    Closure<Map> parser = {String line ->
         String[] items = line.split(delimiter)
-        def record = new Record()
+        def body = [:]
         ["patronId", "country", "ipAddress", "state", "city", "rank", "department", "rank", "ezproxyId", "url", "proxyDate"].each {
             int position = this."$it"
             if (position > -1) {
                 assert position < items.size() : "position $position is larger than the size ${items.size()} of the " +
                         "elements $items"
-                record.body[it] = items[position]
+                body[it] = items[position]
             }
         }
 
-        def body = record.body
         if(encryptIpAddress && body.ipAddress) {
             body.ipAddress = DigestUtils.sha256Hex(body.ipAddress as String)
         }
@@ -54,7 +52,7 @@ class EzproxyIteratorService extends FileIterator {
         if(encryptPatronId && body.patronId) {
             body.patronId = DigestUtils.sha256Hex(body.patronId as String)
         }
-        return record
+        return body
     }
     String encoding = "utf-8"
     //so we can get the line if there is a failure
@@ -72,7 +70,7 @@ class EzproxyIteratorService extends FileIterator {
 
     @SuppressWarnings("GroovyVariableNotAssigned")
     @Override
-    protected Record computeNext() {
+    protected Map computeNext() {
         currentRow++
         if(maxLines > 0 && currentRow > maxLines) {
             return endOfData()
@@ -80,32 +78,25 @@ class EzproxyIteratorService extends FileIterator {
         validateInputs()
         if (lineIterator.hasNext()) {
             currentLine = lineIterator.next()
-            Record record
-            Map body
+            Map body = [:]
             try {
-                record = parser.call(currentLine) as Record
-                body = record.body
-                assert record : "the parser must return a non null record"
+                body = parser.call(currentLine)
                 assert body: "the result should not be empty or null"
                 convertApacheNullToNull(body)
                 addUrlHosts(body)
                 addProxyDate(body)
             }
             catch (Throwable throwable) {
-                if(record == null) {
-                    record = new Record()
-                }
-                record.throwable = throwable
-                body = record.body
                 if(body == null) {
                     body = [:]
-                    record.body = body
                 }
+                log.warn "Could not parse [$body]: $throwable.message"
+                body.exception = throwable
             }
             body.fileName = fileName
             body.lineNumber = currentRow
             body.originalLine = currentLine
-            return record
+            return body
         }
 
         return endOfData()
@@ -162,10 +153,10 @@ class EzproxyIteratorService extends FileIterator {
                 println "Record {"
 
                 println ""
-                println "    originalLine -> $next.body.originalLine"
+                println "    originalLine -> $next.originalLine"
                 println ""
 
-                next.body.each {key, value ->
+                next.each {key, value ->
                     if(key != "originalLine") {
                         Integer position
                         try {

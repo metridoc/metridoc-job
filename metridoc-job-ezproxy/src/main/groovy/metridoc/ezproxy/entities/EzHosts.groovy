@@ -2,7 +2,6 @@ package metridoc.ezproxy.entities
 
 import grails.persistence.Entity
 import groovy.util.logging.Slf4j
-import metridoc.iterators.Record
 
 import static metridoc.ezproxy.utils.TruncateUtils.truncateProperties
 
@@ -38,7 +37,7 @@ class EzHosts extends EzproxyBase {
     }
 
     @Override
-    boolean acceptRecord(Record record) {
+    boolean acceptRecord(Map record) {
         truncateProperties(record,
                 "patronId",
                 "ipAddress",

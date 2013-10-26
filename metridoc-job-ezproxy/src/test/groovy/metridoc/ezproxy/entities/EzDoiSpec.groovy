@@ -1,8 +1,6 @@
 package metridoc.ezproxy.entities
 
-import metridoc.iterators.Record
 import metridoc.service.gorm.GormService
-import metridoc.tool.gorm.MetridocRecordGorm
 import spock.lang.Specification
 
 /**
@@ -23,25 +21,16 @@ class EzDoiSpec extends Specification {
         thrown(Throwable)
 
         when: "populate is called"
-        def record = new Record(
-                body: [
-                        url: badUrl,
-                        ezproxyId: "asdasdf",
-                        fileName: "kjahsdfkjahsdf",
-                        urlHost: "foo"
-                ]
-        )
-        def service = new GormService(embeddedDataSource: true)
-        service.init()
-        service.enableFor(EzDoi)
-        EzDoi.withTransaction {
-            def gormRecord = new MetridocRecordGorm(entityInstance: new EzDoi())
-            gormRecord.populate (record)
-        }
+        def body = [
+                url: badUrl,
+                ezproxyId: "asdasdf",
+                fileName: "kjahsdfkjahsdf",
+                urlHost: "foo"
+        ]
+        def ezDoi = new EzDoi()
 
         then:
-        def error = thrown(AssertionError)
-        error.message.contains("error on field [doi] with error code [nullable]")
+        !ezDoi.acceptRecord(body)
     }
 
     void "test alreadyExists"() {
@@ -51,7 +40,7 @@ class EzDoiSpec extends Specification {
         gormService.enableFor(EzDoi)
         EzDoi.withTransaction {
             new EzDoi(
-                    doi:"foo",
+                    doi: "foo",
                     ezproxyId: "bar",
                     fileName: "foobar",
                     lineNumber: 1,

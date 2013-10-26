@@ -14,31 +14,29 @@ class EzproxyWireService extends DefaultService {
 
     boolean preview
 
-    EzproxyService wireupServices() {
-        preview = true
-        wireupServices(null)
-    }
-
-    EzproxyService wireupServices(Class ezproxyIngestClass) {
+    EzproxyStepsService wireupServices(Class ezproxyIngestClass) {
         includeService(ParseArgsService)
-        boolean mergeConfig = binding.argsMap.mergeMetridocConfig ? Boolean.valueOf(binding.argsMap.mergeMetridocConfig) : true
-
-        includeService(ConfigService, mergeMetridocConfig:mergeConfig)
+        includeService(ConfigService)
 
         wireupNonConfigServices(ezproxyIngestClass)
     }
 
-    protected EzproxyService wireupNonConfigServices(Class ezproxyIngestClass) {
+    protected EzproxyStepsService wireupNonConfigServices(Class ezproxyIngestClass) {
         if (!preview) {
-            includeService(GormService).enableGormFor(ezproxyIngestClass)
+            try {
+                includeService(GormService).enableFor(ezproxyIngestClass)
+            }
+            catch (IllegalStateException ignored) {
+                //already enabled
+            }
         }
 
         def camelService = includeService(CamelService)
         def ezproxyFileFilter = includeService(EzproxyFileFilterService, entityClass: ezproxyIngestClass)
         camelService.bind("ezproxyFileFilter", ezproxyFileFilter)
 
-        includeService(EzproxyIngestService)
-        includeService(EzproxyService, entityClass: ezproxyIngestClass)
+        includeService(EzproxyIngestService, entityClass: ezproxyIngestClass)
+        includeService(EzproxyStepsService)
     }
 
 
