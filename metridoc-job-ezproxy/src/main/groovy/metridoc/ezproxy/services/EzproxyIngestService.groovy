@@ -29,20 +29,41 @@ class EzproxyIngestService extends DefaultService {
 
         setupWriter()
 
-        processFile {
-            ezproxyService.with {
-                ezproxyIterator.validateInputs()
-                if (preview) {
-                    ezproxyIterator.preview()
-                    return
-                }
+        String fileUrl = createFileUrl()
 
-                writerResponse = writer.write(ezproxyIterator)
-                if (writerResponse.fatalErrors) {
-                    throw writerResponse.fatalErrors[0]
+        ezproxyService.with {
+            def usedUrl = camelUrl ?: fileUrl
+            //this creates a file transaction
+            def sanitizedUrl = URISupport.sanitizeUri(usedUrl)
+            log.info "consuming from [${sanitizedUrl}]"
+            boolean atLeastOneFileProcessed = false
+            camelService.consumeWait(usedUrl, waitForFile) { File file ->
+                ezproxyService.file = file
+                if (ezproxyService.file) {
+                    atLeastOneFileProcessed = true
+                    log.info "processing file $file"
+                    ezproxyService.with {
+                        ezproxyIterator.validateInputs()
+                        if (preview) {
+                            ezproxyIterator.preview()
+                            return
+                        }
+
+                        writerResponse = writer.write(ezproxyIterator)
+                        if (writerResponse.fatalErrors) {
+                            throw writerResponse.fatalErrors[0]
+                        }
+                    }
                 }
             }
+
+            if(!atLeastOneFileProcessed) {
+                log.info "no files were processed, if this is unexpected, consider extending the wait time to retrieve the file\n" +
+                        "  command line: use --waitForFile=<milliseconds>"
+                "  config file: use ezproxy.waitForFile=<milliseconds>"
+            }
         }
+
         camelService.close()
     }
 
@@ -82,32 +103,6 @@ class EzproxyIngestService extends DefaultService {
         }
         def service = includeService(EzproxyIteratorService, inputStream: inputStream, file: ezproxyService.file)
         return service
-    }
-
-    protected void processFile(Closure closure) {
-        String fileUrl = createFileUrl()
-
-        ezproxyService.with {
-            def usedUrl = camelUrl ?: fileUrl
-            //this creates a file transaction
-            def sanitizedUrl = URISupport.sanitizeUri(usedUrl)
-            log.info "consuming from [${sanitizedUrl}]"
-            boolean atLeastOneFileProcessed = false
-            camelService.consumeWait(usedUrl, waitForFile) { File file ->
-                ezproxyService.file = file
-                if (ezproxyService.file) {
-                    atLeastOneFileProcessed = true
-                    log.info "processing file $file"
-                    closure.call(ezproxyService.file)
-                }
-            }
-
-            if(!atLeastOneFileProcessed) {
-                log.info "no files were processed, if this is unexpected, consider extending the wait time to retrieve the file\n" +
-                        "  command line: use --waitForFile=<milliseconds>"
-                        "  config file: use ezproxy.waitForFile=<milliseconds>"
-            }
-        }
     }
 
     protected String createFileUrl() {
