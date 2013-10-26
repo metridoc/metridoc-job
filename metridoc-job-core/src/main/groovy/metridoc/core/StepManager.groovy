@@ -117,17 +117,31 @@ class StepManager {
     @SuppressWarnings("GroovyAssignabilityCheck")
     def step(Map data, Closure closure) {
         closure.delegate = this //required for imported step
-        def depends = data.remove("depends")
+        def dependsList = data.remove("depends")
         assert data.size() == 1: "The target map has more variables than it should"
         def key = (data.keySet() as List<String>)[0]
         String description = data[key]
-        def closureToRun = {
-            profile(description, closure)
+        def closureToRun
+
+        if(dependsList) {
+            closureToRun = {
+                profile(description) {
+                    if (dependsList instanceof String) {
+                        depends(dependsList)
+                    }
+                    else {
+                        depends(dependsList as String[])
+                    }
+                    closure.call()
+                }
+            }
+        }
+        else {
+            closureToRun = {
+                profile(description, closure)
+            }
         }
         stepMap.put(key, closureToRun)
-        if (depends) {
-            addDepends(key, depends)
-        }
     }
 
     void addDepends(String targetName, List depends) {
