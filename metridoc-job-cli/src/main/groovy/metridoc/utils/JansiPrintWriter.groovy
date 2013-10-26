@@ -61,6 +61,10 @@ class JansiPrintWriter extends PrintStream {
             return RED
         }
 
+        if(text.contains("Exception in")) {
+            return RED
+        }
+
         if(text.trim().startsWith("at ") && !text.startsWith("at ")) {
             return RED
         }

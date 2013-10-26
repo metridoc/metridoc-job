@@ -65,7 +65,7 @@ class MetridocMain {
                 throw ignored //just rethrow it
             }
             println ""
-            System.err.println("ERROR: $ignored.message")
+            System.err.println("ERROR: $ignored.message, use --stacktrace to see more details")
             println ""
 
             if (exitOnFailure) {
