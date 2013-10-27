@@ -34,11 +34,12 @@ buildscript {
 project.ext {
     bintrayRepo = "http://dl.bintray.com/upennlib/metridoc-distributions"
 }
+String[] compileDeps = ['org.codehaus.groovy:groovy-all:2.0.8', 'org.apache.commons:commons-compress:1.5',
+'commons-cli:commons-cli:1.2', 'org.slf4j:slf4j-simple:1.7.5', 'org.fusesource.jansi:jansi:1.2.1'] as String[]
 
 dependencies {
     //core libraries that are required to get the cli up and running
-    compile 'org.codehaus.groovy:groovy-all:2.0.8', 'org.apache.commons:commons-compress:1.5',
-            'commons-cli:commons-cli:1.2', 'org.slf4j:slf4j-simple:1.7.5', 'org.fusesource.jansi:jansi:1.2.1'
+    compile compileDeps
 
     //metridoc
     if(project.version.contains("SNAPSHOT")) {
@@ -140,6 +141,7 @@ task createDependencyFile << {
     def mavenUrl = "http://repo1.maven.org/maven2"
 
     dependencyFile.withPrintWriter("utf-8") { PrintWriter writer ->
+        def compileSet = compileDeps
         configurations.provided.resolvedConfiguration.resolvedArtifacts.each {
             def dep = it.resolvedDependency
             String moduleGroup = dep.moduleGroup
@@ -148,8 +150,12 @@ task createDependencyFile << {
             def baseUrl = moduleName.contains("metridoc") ? metridocUrl : jcenterUrl
             baseUrl = moduleName.contains("groovy-stream") ? mavenUrl : baseUrl
 
-            writer.println "$baseUrl/${moduleGroup.replaceAll(/\./, "/")}/$moduleName/$moduleVersion/" +
-                    "$moduleName-${moduleVersion}.jar"
+            boolean inCompileSet = compileSet.find {it.contains(":${moduleName}:")}
+
+            if(!inCompileSet) {
+                writer.println "$baseUrl/${moduleGroup.replaceAll(/\./, "/")}/$moduleName/$moduleVersion/" +
+                        "$moduleName-${moduleVersion}.jar"
+            }
         }
     }
 }
