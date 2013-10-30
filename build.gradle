@@ -4,6 +4,9 @@ task wrapper(type: Wrapper) {
 }
 
 def versionForSubProjects = new File(project.projectDir, "VERSION").text
+
+assert versionForSubProjects ==~ /^\d+\.\d+\.\d+(-SNAPSHOT)?$/ : "version [$versionForSubProjects] is not in x.x.x format"
+
 subprojects {
     apply plugin: 'groovy'
     project.ext.archivesBaseName = project.name
