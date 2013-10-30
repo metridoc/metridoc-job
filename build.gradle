@@ -13,7 +13,7 @@ repositories {
 dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.0.8',
             'org.slf4j:slf4j-simple:1.7.5'
-    compile('com.github.metridoc:metridoc-tool-gorm:latest')
+    compile('com.github.metridoc:metridoc-tool-gorm:latest.integration')
     testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
 }
 
