@@ -30,6 +30,9 @@ echo "Releasing ${PROJECT_VERSION} to BinTray"
 echo ""
 
 systemCall "./gradlew publishArchives publishDistribution bumpVersion"
+systemCall "./gradlew compileGroovy"
 systemCall "git add VERSION"
+#this will update the DEPENDENCY_URLS file
+systemCall "git add metridoc-job-cli/src/main/resources/DEPENDENCY_URLS"
 systemCall "git commit -m 'committing a new version'"
 systemCall "git push origin master"
