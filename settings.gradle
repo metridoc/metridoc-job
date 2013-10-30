@@ -1,1 +1,0 @@
-include 'metridoc-job-core', 'metridoc-tool-gorm', 'metridoc-job-cli', 'metridoc-job-ezproxy'
