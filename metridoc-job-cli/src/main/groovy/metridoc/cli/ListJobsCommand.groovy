@@ -22,6 +22,7 @@ class ListJobsCommand implements Command {
             }
             else {
                 println "No jobs have been installed"
+                return true
             }
 
             jobDir.eachFile(FileType.DIRECTORIES) {
