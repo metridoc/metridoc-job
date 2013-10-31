@@ -85,6 +85,7 @@ class ResolveDoisService {
         if (response.malformedDoi || response.unresolved) {
             ezDoi.resolvableDoi = false
             stats.unresolvable+=1
+            log.debug "Could not resolve doi $ezDoi.doi, it was either malformed or unresolvable"
         }
         else if (response.statusException) {
             String message = "An exception occurred trying to resolve doi [$ezDoi.doi]"
@@ -95,6 +96,7 @@ class ResolveDoisService {
             EzDoiJournal journal = EzDoiJournal.findByDoi(response.doi)
             if (journal) {
                 stats.preexisting+=1
+                log.debug "doi ${response.doi} has already been processed"
             }
             else {
                 def ezJournal = new EzDoiJournal()
@@ -105,12 +107,10 @@ class ResolveDoisService {
             }
         }
 
-        if (stats.total %200 == 0){
+        if (stats.total %100 == 0){
             log.info "Record stats: [$stats]"
         }
-        if (stats.total %50 == 0){
-            print "Processing #${stats.total}"
-        }
+        
         stats.total+=1
         return stats
     }
