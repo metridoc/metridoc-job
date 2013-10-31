@@ -36,8 +36,6 @@ class ResolveDoisService {
     String fourByteReplacement = "_?_"
     CrossRefService crossRefService
 
-
-
     @Step(description = "resolves dois against crossref")
     void resolveDois() {
         EzDoi.withTransaction {
@@ -87,7 +85,6 @@ class ResolveDoisService {
         if (response.malformedDoi || response.unresolved) {
             ezDoi.resolvableDoi = false
             stats.unresolvable+=1
-            //log.info "Could not resolve doi $ezDoi.doi, it was either malformed or unresolvable"
         }
         else if (response.statusException) {
             String message = "An exception occurred trying to resolve doi [$ezDoi.doi]"
@@ -98,7 +95,6 @@ class ResolveDoisService {
             EzDoiJournal journal = EzDoiJournal.findByDoi(response.doi)
             if (journal) {
                 stats.preexisting+=1
-                //log.info "doi ${response.doi} has already been processed"
             }
             else {
                 def ezJournal = new EzDoiJournal()
