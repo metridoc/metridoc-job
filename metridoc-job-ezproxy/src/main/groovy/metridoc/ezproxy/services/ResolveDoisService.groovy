@@ -36,9 +36,18 @@ class ResolveDoisService {
     String fourByteReplacement = "_?_"
     CrossRefService crossRefService
 
+
+
     @Step(description = "resolves dois against crossref")
     void resolveDois() {
         EzDoi.withTransaction {
+
+            def stats = [
+                    processed: 0,
+                    preexisting: 0,
+                    unresolvable: 0,
+                    total: 0
+            ]
 
             List ezDois = EzDoi.findAllByProcessedDoi(false, [max: doiResolutionCount])
 
@@ -53,7 +62,7 @@ class ResolveDoisService {
             ezDois.each { EzDoi ezDoi ->
                 def response = crossRefService.resolveDoi(ezDoi.doi)
                 try {
-                    processResponse(response, ezDoi)
+                    stats = processResponse(response, ezDoi, stats)
                 }
                 catch (Throwable throwable) {
                     log.error """
@@ -73,11 +82,12 @@ class ResolveDoisService {
         }
     }
 
-    protected void processResponse(CrossRefResponse response, EzDoi ezDoi) {
+    protected Map processResponse(CrossRefResponse response, EzDoi ezDoi, Map stats) {
         assert !response.loginFailure: "Could not login into cross ref"
         if (response.malformedDoi || response.unresolved) {
             ezDoi.resolvableDoi = false
-            log.info "Could not resolve doi $ezDoi.doi, it was either malformed or unresolvable"
+            stats.unresolvable+=1
+            //log.info "Could not resolve doi $ezDoi.doi, it was either malformed or unresolvable"
         }
         else if (response.statusException) {
             String message = "An exception occurred trying to resolve doi [$ezDoi.doi]"
@@ -87,14 +97,26 @@ class ResolveDoisService {
         else {
             EzDoiJournal journal = EzDoiJournal.findByDoi(response.doi)
             if (journal) {
-                log.info "doi ${response.doi} has already been processed"
+                stats.preexisting+=1
+                //log.info "doi ${response.doi} has already been processed"
             }
             else {
                 def ezJournal = new EzDoiJournal()
                 ingestResponse(ezJournal, response)
                 ezJournal.save(failOnError: true, flush: true)
+                stats.processed+=1
+
             }
         }
+
+        if (stats.total %200 == 0){
+            log.info "Record stats: [$stats]"
+        }
+        if (stats.total %50 == 0){
+            print "Processing #${stats.total}"
+        }
+        stats.total+=1
+        return stats
     }
 
     protected void logWarning(String message, Exception statusException) {
