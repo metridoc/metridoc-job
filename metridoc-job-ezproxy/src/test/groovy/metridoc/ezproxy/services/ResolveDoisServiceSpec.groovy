@@ -48,12 +48,18 @@ class ResolveDoisServiceSpec extends Specification{
     void "test process response on CrossRefResponseException"() {
         when:
         ResolveDoisService service = new ResolveDoisService()
+        def stats = [
+                processed: 0,
+                preexisting: 0,
+                unresolvable: 0,
+                total: 0
+        ]
         EzDoi ezDoi = new EzDoi(doi: "foo")
         service.processResponse(
                 new CrossRefResponse(
                         statusException: new CrossRefResponseException(400, new URL("http://foo.bar"))
                 ),
-                ezDoi
+                ezDoi, stats
         )
 
         then:
