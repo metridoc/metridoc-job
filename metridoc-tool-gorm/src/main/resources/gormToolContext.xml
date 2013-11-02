@@ -95,9 +95,17 @@
         <constructor-arg index="1" value="#{grailsApplication.config}"/>
     </bean>
 
-    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
-        <gsp:scriptlet>dataSourceProperties.each {key, value -></gsp:scriptlet>
-        <property name="${key}" value="${value}"/>
-        <gsp:scriptlet>}</gsp:scriptlet>
-    </bean>
+    <gsp:scriptlet>if(useFactoryMethod) {</gsp:scriptlet>
+        <bean id="dataSource" class="metridoc.service.gorm.GormService" factory-method="getDataSoruce">
+            <constructor-arg>
+                <value>${dataSourcePrefix}</value>
+            </constructor-arg>
+        </bean>
+    <gsp:scriptlet>} else {</gsp:scriptlet>
+        <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+            <gsp:scriptlet>dataSourceProperties.each {key, value -></gsp:scriptlet>
+            <property name="${key}" value="${value}"/>
+            <gsp:scriptlet>}</gsp:scriptlet>
+        </bean>
+    <gsp:scriptlet>}</gsp:scriptlet>
 </beans>

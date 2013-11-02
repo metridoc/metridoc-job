@@ -129,7 +129,7 @@ class ConfigService extends DefaultService {
         def embeddedDataSource
         try {
             if (binding.hasVariable("args")) {
-                localMysql = binding.args.find { it.contains("-localMysql") }
+                localMysql = binding.args.find { it.contains("-localMysql") || it.contains("-localMySql")}
                 if (localMysql) {
                     def dataSource = DataSourceConfigUtil.localMysqlDataSource
                     binding.dataSource = dataSource

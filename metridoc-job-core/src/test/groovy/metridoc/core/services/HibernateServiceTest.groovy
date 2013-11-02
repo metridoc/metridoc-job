@@ -84,8 +84,7 @@ class HibernateServiceTest {
         binding.includeService(ConfigService)
         def service = binding.includeService(HibernateService)
         assert service.localMysql
-        def config = binding.config
-        assert "jdbc:mysql://localhost:3306/test" == config.dataSource.url
+        assert "jdbc:mysql://localhost:3306/test" == binding.dataSource.url
     }
 }
 
