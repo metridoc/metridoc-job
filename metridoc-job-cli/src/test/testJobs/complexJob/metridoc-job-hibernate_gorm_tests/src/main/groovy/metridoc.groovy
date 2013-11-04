@@ -22,7 +22,7 @@ import metridoc.core.services.ConfigService
 includeService(ConfigService)
 def tool = includeService(HibernateService)
 assert tool.localMysql: "localMysql should be true"
-assert config.dataSource.url == "jdbc:mysql://localhost:3306/test"
+assert dataSource.url == "jdbc:mysql://localhost:3306/test"
 
 
 
