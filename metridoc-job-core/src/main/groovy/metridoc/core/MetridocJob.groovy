@@ -18,7 +18,6 @@
 package metridoc.core
 
 import camelscript.CamelGLite
-import camelscript.ResponseException
 import metridoc.core.tools.CamelTool
 import metridoc.core.tools.RunnableTool
 import org.apache.camel.Exchange
@@ -115,11 +114,11 @@ abstract class MetridocJob extends RunnableTool {
         camelTool.convertTo(convertion, valueToConvert)
     }
 
-    Exchange send(String endpoint, body) throws ResponseException {
+    Exchange send(String endpoint, body) {
         camelTool.send(endpoint, body)
     }
 
-    Exchange send(String endpoint, body, Map headers) throws ResponseException {
+    Exchange send(String endpoint, body, Map headers) {
         camelTool.send(endpoint, body, headers)
     }
 

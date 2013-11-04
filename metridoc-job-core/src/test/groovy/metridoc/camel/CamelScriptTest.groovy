@@ -17,6 +17,7 @@
 
 package metridoc.camel
 
+import metridoc.core.services.CamelService
 import org.apache.camel.Exchange
 import org.junit.Test
 
@@ -35,20 +36,26 @@ class CamelScriptTest {
     void "test some basic routing, default route called is direct:start"() {
 
         def calledMe = false
-        CamelScript.runRoute {
+        def binding = new Binding()
+        def camel = binding.includeService(CamelService)
+        camel.addRoutes {
             from("direct:start").process {
                 calledMe = true
             }
         }
+        camel.send("direct:start")
 
         assert calledMe
     }
 
     @Test
     void "property from owner should exist in registry"() {
-        CamelScript.runRoute {
+        def binding = new Binding()
+        binding.variables.foo = "bar"
+        def camel = binding.includeService(CamelService)
+        camel.addRoutes {
             from("direct:start").process {Exchange exchange ->
-                assert exchange.context.registry.lookup("ownerProperty")
+                assert "bar" == exchange.context.registry.lookupByName("foo")
             }
         }
     }
