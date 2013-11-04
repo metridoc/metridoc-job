@@ -18,6 +18,7 @@
 package metridoc.service.gorm
 
 import groovy.text.XmlTemplateEngine
+import metridoc.core.InjectArg
 import metridoc.core.services.DataSourceService
 import metridoc.iterators.Iterators
 import metridoc.tool.gorm.GormClassLoaderPostProcessor
@@ -36,7 +37,9 @@ import java.text.SimpleDateFormat
  * @author Tommy Barker
  */
 class GormService extends DataSourceService {
+    @InjectArg(ignore = true)
     ApplicationContext applicationContext
+
 
     static {
         Iterators.WRITERS["gorm"] = GormIteratorWriter
@@ -88,7 +91,9 @@ class GormService extends DataSourceService {
         template.make([
                 gormBeans: gormBeans,
                 hibernateProperties: hibernateProperties,
-                dataSourceProperties: dataSourceProperties
+                dataSourceProperties: dataSourceProperties,
+                useFactoryMethod: !dataSourceHash.isEmpty(),
+                dataSourcePrefix: dataSourcePrefix
         ]).writeTo(file.newWriter("utf-8"))
         file.deleteOnExit()
         applicationContext = new FileSystemXmlApplicationContext(file.toURI().toURL().toString())

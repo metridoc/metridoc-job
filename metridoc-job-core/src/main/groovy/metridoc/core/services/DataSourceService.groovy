@@ -20,6 +20,7 @@ package metridoc.core.services
 import org.hibernate.Session
 import org.hibernate.SessionFactory
 
+import javax.sql.DataSource
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -33,7 +34,27 @@ abstract class DataSourceService extends DefaultService {
     String dataSourcePrefix = "dataSource"
     private boolean enableForRan = false
 
+    protected static dataSourceHash = [:]
+
+    static DataSource getDataSoruce(String dataSourceName) {
+        def trimmedName = dataSourceName.trim()
+        assert dataSourceHash[trimmedName] : "dataSource [${trimmedName}] does not exist"
+        dataSourceHash[trimmedName]
+    }
+
     void init() {
+        def dataSourceInBinding = binding.variables.find {String key, value -> key.startsWith("dataSource") &&
+                value instanceof DataSource}
+
+        if(dataSourceInBinding) {
+            binding.variables.each {String key, value ->
+                if(key.startsWith("dataSource") && value instanceof DataSource) {
+                    dataSourceHash[key] = value
+                }
+            }
+            return
+        }
+
         def dataSource = config."$dataSourcePrefix"
         if (embeddedDataSource) {
             dataSource.url = "jdbc:h2:mem:devDb;MVCC=TRUE;LOCK_TIMEOUT=10000"

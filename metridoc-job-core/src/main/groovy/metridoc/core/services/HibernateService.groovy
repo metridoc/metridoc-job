@@ -64,14 +64,6 @@ class HibernateService extends DataSourceService {
         sessionFactory = createSessionFactory()
     }
 
-    SessionFactory getSessionFactory() {
-        if (sessionFactory) {
-            return sessionFactory
-        }
-
-        sessionFactory = createSessionFactory()
-    }
-
     @SuppressWarnings("GroovyMissingReturnStatement")
     Properties convertDataSourcePropsToHibernate(ConfigObject configObject) {
         DataSourceConfigUtil.getHibernateOnlyProperties(configObject, dataSourcePrefix)

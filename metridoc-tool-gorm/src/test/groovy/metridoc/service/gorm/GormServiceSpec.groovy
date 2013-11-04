@@ -19,9 +19,10 @@
 package metridoc.service.gorm
 
 import groovy.sql.Sql
-import metridoc.core.MetridocScript
-import metridoc.core.tools.ConfigTool
+import metridoc.core.services.ConfigService
 import metridoc.tool.gorm.User
+import metridoc.utils.DataSourceConfigUtil
+import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -71,7 +72,7 @@ class GormServiceSpec extends Specification {
 
     void "test gorm with dataSource properties"() {
         setup:
-        service.includeService(mergeMetridocConfig: false, ConfigTool)
+        service.includeService(mergeMetridocConfig: false, ConfigService)
         ConfigObject configObject = service.config
         configObject.dataSource.driverClassName = "org.h2.Driver"
         configObject.dataSource.username = "sa"
@@ -154,6 +155,33 @@ class GormServiceSpec extends Specification {
         then:
         def error = thrown(AssertionError)
         error.message.contains("[SessionFactory] cannot be retrieved until [enableFor] is called for one or more entities")
+    }
+
+    void "the dataSource in the binding should be the same as the one in the binding"() {
+        given:
+        def binding = new Binding()
+        def dataSource = DataSourceConfigUtil.embeddedDataSource
+        binding.dataSource = dataSource
+
+        when:
+        def gormService = binding.includeService(GormService)
+        gormService.enableFor(User)
+
+        then: "the dataSources are the same"
+        dataSource == gormService.applicationContext.getBean("dataSource")
+    }
+
+    void "applicationContext shold not be injectable"() {
+        given:
+        def applicationContextMock = [:] as ApplicationContext
+        def binding = new Binding()
+        binding.applicationContext = applicationContextMock
+
+        when:
+        def gormService = binding.includeService(GormService)
+
+        then:
+        !gormService.applicationContext
     }
 }
 
