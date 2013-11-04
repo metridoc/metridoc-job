@@ -61,8 +61,8 @@ class SqlPlusRouteTest {
         service.bind("dataSource", embeddedDataSource)
 
         service.with {
-            consumeNoWait("sqlplus:foo?dataSource=dataSource") { ResultSet resultSet ->
-                send("sqlplus:bar?dataSource=dataSource&logBatches=true", resultSet)
+            consumeNoWait("sqletl:foo?dataSource=dataSource") { ResultSet resultSet ->
+                send("sqletl:bar?dataSource=dataSource&logBatches=true", resultSet)
             }
         }
 

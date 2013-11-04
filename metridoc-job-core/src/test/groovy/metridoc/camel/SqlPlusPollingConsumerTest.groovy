@@ -68,7 +68,7 @@ class SqlPlusPollingConsumerTest extends CamelTestSupport {
 
     @Test
     void "test resultset handling"() {
-        Exchange exchange = consumer.receive("sqlplus:foo?dataSource=dataSource")
+        Exchange exchange = consumer.receive("sqletl:foo?dataSource=dataSource")
         ResultSet resultSet = exchange.in.body
         assert !resultSet.isClosed()
     }
