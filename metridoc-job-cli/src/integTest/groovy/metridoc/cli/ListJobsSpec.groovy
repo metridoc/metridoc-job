@@ -24,7 +24,7 @@ class ListJobsSpec extends AbstractFunctionalSpec {
 
     void "test list jobs"() {
         when:
-        runCommand(["install", "src/test/testJobs/metridoc-job-bar-0.1.zip"])
+        runCommand(["install", "src/testJobs/metridoc-job-bar-0.1.zip"])
         int exitCode = runCommand(["list-jobs"])
 
         then:
@@ -35,7 +35,7 @@ class ListJobsSpec extends AbstractFunctionalSpec {
 
     void "test installing a job with no version"() {
         when:
-        runCommand(["install", "src/test/testJobs/simpleJob"])
+        runCommand(["install", "src/testJobs/simpleJob"])
         int exitCode = runCommand(["list-jobs"])
 
         then:

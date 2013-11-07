@@ -30,14 +30,14 @@ class InstallSpec extends AbstractFunctionalSpec {
 
     void "test install job"() {
         when:
-        int exitCode = runCommand(["install", "src/test/testJobs/metridoc-job-bar-0.1.zip"])
+        int exitCode = runCommand(["install", "src/testJobs/metridoc-job-bar-0.1.zip"])
 
         then:
         0 == exitCode
         bar1.exists()
 
         when:
-        exitCode = runCommand(["install", "src/test/testJobs/metridoc-job-bar-0.2.zip"])
+        exitCode = runCommand(["install", "src/testJobs/metridoc-job-bar-0.2.zip"])
 
         then:
         0 == exitCode
@@ -51,14 +51,14 @@ class InstallSpec extends AbstractFunctionalSpec {
 
     void "test installing a directory"() {
         when:
-        int exitCode = runCommand(["install", "src/test/testJobs/simpleJob"])
+        int exitCode = runCommand(["install", "src/testJobs/simpleJob"])
 
         then:
         0 == exitCode
         simpleJobUnversioned.exists()
 
         when: "installing it again"
-        exitCode = runCommand(["install", "src/test/testJobs/simpleJob"])
+        exitCode = runCommand(["install", "src/testJobs/simpleJob"])
 
         then: "old one should be deleted, new one installed"
         output.contains("upgrading metridoc-job-simpleJob")
@@ -98,7 +98,7 @@ class InstallSpec extends AbstractFunctionalSpec {
 
     void "test installing from the current directory"() {
         given:
-        baseWorkDir = "src/test/testJobs/complexJob/metridoc-job-foo-0.1"
+        baseWorkDir = "src/testJobs/complexJob/metridoc-job-foo-0.1"
 
         when:
         int exitCode = runCommand(["install", "."])
@@ -119,7 +119,7 @@ class InstallSpec extends AbstractFunctionalSpec {
 
     void "versioned and unversioned jobs should overrite each other"() {
         when:
-        int exitCode = runCommand(["install", "src/test/testJobs/simpleJob"])
+        int exitCode = runCommand(["install", "src/testJobs/simpleJob"])
 
         then:
         0 == exitCode
@@ -127,7 +127,7 @@ class InstallSpec extends AbstractFunctionalSpec {
         !simpleJobVersioned.exists()
 
         when:
-        exitCode = runCommand(["install", "src/test/testJobs/simpleJob-master"])
+        exitCode = runCommand(["install", "src/testJobs/simpleJob-master"])
 
         then:
         0 == exitCode

@@ -52,7 +52,7 @@ class MetridocMainSpec extends Specification {
 
     void "test running a script"() {
         given:
-        def args = ["--stacktrace", normalizePath("src/test/testJobs/script/simpleScript.groovy"), "--mergeMetridocConfig=false",
+        def args = ["--stacktrace", normalizePath("src/testJobs/script/simpleScript.groovy"), "--mergeMetridocConfig=false",
                 "--embeddedDataSource"]
         def main = new MetridocMain(args: args)
 
@@ -66,7 +66,7 @@ class MetridocMainSpec extends Specification {
 
     void "test running a simple job"() {
         given:
-        def args = ["--stacktrace", normalizePath("src/test/testJobs/simpleJob"), "--mergeMetridocConfig=false",
+        def args = ["--stacktrace", normalizePath("src/testJobs/simpleJob"), "--mergeMetridocConfig=false",
                 "--embeddedDataSource"]
         def main = new MetridocMain(args: args)
 
@@ -81,7 +81,7 @@ class MetridocMainSpec extends Specification {
     void "test running a complex job"() {
         given:
         def args = ["foo", "--stacktrace"]
-        def main = new MetridocMain(args: args, jobPath: normalizePath("src/test/testJobs/complexJob"))
+        def main = new MetridocMain(args: args, jobPath: normalizePath("src/testJobs/complexJob"))
 
         when:
         def result = main.run()
@@ -93,7 +93,7 @@ class MetridocMainSpec extends Specification {
 
     void "test running a complex job from a directory"() {
         given:
-        def args = [normalizePath("src/test/testJobs/complexJob/metridoc-job-foo-0.1")]
+        def args = [normalizePath("src/testJobs/complexJob/metridoc-job-foo-0.1")]
         def main = new MetridocMain(args: args)
 
         when:
@@ -106,7 +106,7 @@ class MetridocMainSpec extends Specification {
 
     void "test installing and running a job"() {
         given:
-        def args = ["install", new File(normalizePath("src/test/testJobs/metridoc-job-bar-0.1.zip")).toURI().toURL().toString()]
+        def args = ["install", new File(normalizePath("src/testJobs/metridoc-job-bar-0.1.zip")).toURI().toURL().toString()]
         def main = new MetridocMain(args: args, jobPath: folder.getRoot().toString())
 
         when:
@@ -135,7 +135,7 @@ class MetridocMainSpec extends Specification {
 
     void "test grabbing a file from a directory"() {
         when:
-        def readme = new MetridocMain().getFileFromDirectory(new File(normalizePath("src/test/testJobs/complexJob/metridoc-job-foo-0.1")), "README")
+        def readme = new MetridocMain().getFileFromDirectory(new File(normalizePath("src/testJobs/complexJob/metridoc-job-foo-0.1")), "README")
 
         then:
         readme.exists()
@@ -156,7 +156,7 @@ class MetridocMainSpec extends Specification {
         new MetridocMain(
                 exitOnFailure: false,
                 args: [
-                        normalizePath("src/test/testJobs/script/errorScript.groovy"),
+                        normalizePath("src/testJobs/script/errorScript.groovy"),
                         "--stacktrace"
                 ] as String[]).run()
 

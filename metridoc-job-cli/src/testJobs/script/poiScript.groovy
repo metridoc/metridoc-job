@@ -1,6 +1,6 @@
 import groovy.stream.Stream
 
-def file = new File("src/test/testJobs/script/locations.xlsx")
+def file = new File("src/testJobs/script/locations.xlsx")
 if(!file.exists()) {
     file = new File("locations.xlsx")
 }

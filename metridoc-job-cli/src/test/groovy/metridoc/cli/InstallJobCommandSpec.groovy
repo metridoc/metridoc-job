@@ -51,7 +51,7 @@ class InstallJobCommandSpec extends Specification {
 
     void "install a sub job in a zip file"() {
         given:
-        def path = "src/test/testJobs/complexJob.zip"
+        def path = "src/testJobs/complexJob.zip"
         def inIntellij = !new File(path).exists()
         if(inIntellij) {
             path = "metridoc-job-cli/$path"

@@ -25,7 +25,7 @@ class HibernateDataSourceSpec extends AbstractFunctionalSpec {
 
     void "localMysql and MergeConfig flags should work"() {
         when:
-        int exitCode = runCommand(["--stacktrace", "src/test/testJobs/complexJob/metridoc-job-hibernate_gorm_tests", "--localMysql",
+        int exitCode = runCommand(["--stacktrace", "src/testJobs/complexJob/metridoc-job-hibernate_gorm_tests", "--localMysql",
                 "--mergeMetridocConfig=false"])
 
         then:
