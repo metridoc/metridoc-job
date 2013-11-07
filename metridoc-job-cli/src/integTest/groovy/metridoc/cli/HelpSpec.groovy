@@ -53,7 +53,7 @@ class HelpSpec extends AbstractFunctionalSpec {
 
     void "test help for a job"() {
         when: "I ask help for a job with a path"
-        int exitCode = runCommand(["help", "src/test/testJobs/script/simpleScript.groovy"])
+        int exitCode = runCommand(["help", "src/testJobs/script/simpleScript.groovy"])
 
         then: "The readme at its base is returned"
         0 == exitCode
@@ -62,7 +62,7 @@ class HelpSpec extends AbstractFunctionalSpec {
 
     void "test help for a job after install"() {
         when: "I install a job"
-        runCommand(["install", "src/test/testJobs/metridoc-job-bar-0.1.zip"])
+        runCommand(["install", "src/testJobs/metridoc-job-bar-0.1.zip"])
 
         and: "and ask for help on installed job"
         int exitCode =runCommand(["help", "bar"])
@@ -77,7 +77,7 @@ class HelpSpec extends AbstractFunctionalSpec {
 
     void "test help for a directory based job"() {
         when:
-        int exitCode = runCommand(["help", "src/test/testJobs/complexJob/metridoc-job-foo-0.1"])
+        int exitCode = runCommand(["help", "src/testJobs/complexJob/metridoc-job-foo-0.1"])
 
         then:
         0 == exitCode

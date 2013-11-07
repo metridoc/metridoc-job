@@ -29,7 +29,7 @@ class GormSpec extends AbstractFunctionalSpec {
         int exitCode = 0
         when:
         if(!System.getProperty("os.name").contains("indows")) {
-            exitCode = runCommand(["--stacktrace", "src/test/testJobs/complexJob/metridoc-job-gorm",
+            exitCode = runCommand(["--stacktrace", "src/testJobs/complexJob/metridoc-job-gorm",
                     "--mergeMetridocConfig=false"])
         }
 

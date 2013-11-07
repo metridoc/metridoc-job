@@ -25,10 +25,10 @@ import spock.lang.IgnoreRest
  */
 class RunJobSpec extends AbstractFunctionalSpec {
 
-    def scriptLocation = "src/test/testJobs/script/simpleScript.groovy"
+    def scriptLocation = "src/testJobs/script/simpleScript.groovy"
 
     def setup() {
-        runCommand(["install", "src/test/testJobs/metridoc-job-bar-0.1.zip"])
+        runCommand(["install", "src/testJobs/metridoc-job-bar-0.1.zip"])
     }
 
     def cleanup() {
@@ -65,7 +65,7 @@ class RunJobSpec extends AbstractFunctionalSpec {
     void "run a job in a directory with non standard root script when in the same directory"() {
 
         setup:
-        baseWorkDir = "src/test/testJobs/complexJob/metridoc-job-foo-0.1"
+        baseWorkDir = "src/testJobs/complexJob/metridoc-job-foo-0.1"
 
         when:
         int exitCode = runCommand(["."])
@@ -92,25 +92,26 @@ class RunJobSpec extends AbstractFunctionalSpec {
         int exitCode = 0
         if (!System.getProperty("os.name").contains("indows")) {
             //this does not build in windows
-            exitCode = runCommand(["--stacktrace", "src/test/testJobs/simpleJob", "--embeddedDataSource"])
+            exitCode = runCommand(["--stacktrace", "src/testJobs/simpleJob", "--embeddedDataSource"])
         }
 
         then:
         0 == exitCode
     }
-
+    /*
     void "run a remote script"() {
         when:
-        int exitCode = runCommand(["--stacktrace", "https://raw.github.com/metridoc/metridoc-job-cli/master/src/test/testJobs/script/simpleScript.groovy", "--embeddedDataSource", "--mergeMetridocConfig=false"])
+        int exitCode = runCommand(["--stacktrace", "https://raw.github.com/metridoc/metridoc-job-cli/master/src/testJobs/script/simpleScript.groovy", "--embeddedDataSource", "--mergeMetridocConfig=false"])
 
         then:
         0 == exitCode
         output.contains("simpleScript ran")
     }
+    */
 
     void "test job with global properties"() {
         when:
-        int exitCode = runCommand(["-logLevel", "debug", "src/test/testJobs/script/injectionWithGlobalProps.groovy", "-bar=foo", "-foo", "-stacktrace"])
+        int exitCode = runCommand(["-logLevel", "debug", "src/testJobs/script/injectionWithGlobalProps.groovy", "-bar=foo", "-foo", "-stacktrace"])
 
         then:
         0 == exitCode
