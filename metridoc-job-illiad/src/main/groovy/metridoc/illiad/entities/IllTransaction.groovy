@@ -56,6 +56,8 @@ class IllTransaction {
     String inProcessDate
     String billingAmount
     String userId
+    String originalNvtgc
+    String borrowerNvtgc
 
     static mapping = {
         version(defaultValue: '0')
@@ -63,6 +65,8 @@ class IllTransaction {
     }
 
     static constraints = {
+        borrowerNvtgc(nullable: true)
+        originalNvtgc(nullable: true)
         transactionNumber(unique: true)
         lendingLibrary(nullable: true)
         userName(nullable: true)
