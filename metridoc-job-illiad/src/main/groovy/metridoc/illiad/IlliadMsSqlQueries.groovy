@@ -47,6 +47,7 @@ class IlliadMsSqlQueries {
                 " TransactionDate as transaction_date, ISSN, ESPNumber as ESP_number, LendingString as lender_codes, " +
                 " LendingLibrary as lending_library, ReasonForCancellation as reason_for_cancellation, CallNumber as call_number, " +
                 " Location as location, ProcessType as process_type, SystemID as system_id, IFMCost as IFM_cost, " +
+                " OriginalNVTGC as original_nvtgc, BorrowerNVTGC as borrower_nvtgc, " +
                 " InProcessDate as in_process_date, BillingAmount as billing_amount from Transactions " +
                 " where TransactionStatus in ('Request Finished','Cancelled by ILL Staff') and convert(varchar(11), TransactionDate, 112) >= '${startDate}'"
     }
