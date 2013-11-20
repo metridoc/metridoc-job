@@ -48,7 +48,7 @@ class EzproxyFileFilterService implements GenericFileFilter {
 
             assert entityClass && gormService : "entityClass and gormService must not be null"
 
-            log.debug "testing if file [$file.fileNameOnly] should be processed"
+            log.info "testing if file [$file.fileNameOnly] should be processed"
             List result
             entityClass.withTransaction {
                 result = entityClass.findAllByFileName(file.fileName)
@@ -57,9 +57,9 @@ class EzproxyFileFilterService implements GenericFileFilter {
             boolean processFile = result == null || result.size() == 0
 
             if(processFile) {
-                log.debug "file [$file.fileNameOnly] should be processed for loading table [$entityClass]"
+                log.info "file [$file.fileNameOnly] should be processed for loading table [$entityClass]"
             } else {
-                log.debug "file [$file.fileNameOnly] should NOT be processed for loading table [$entityClass]"
+                log.info "file [$file.fileNameOnly] should NOT be processed for loading table [$entityClass]"
             }
 
             return processFile
