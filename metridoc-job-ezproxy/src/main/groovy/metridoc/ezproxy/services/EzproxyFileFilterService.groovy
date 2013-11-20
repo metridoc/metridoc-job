@@ -53,8 +53,9 @@ class EzproxyFileFilterService implements GenericFileFilter {
             assert entityClass && gormService : "entityClass and gormService must not be null"
 
             log.info "testing if file [$file.fileNameOnly] should be processed"
+            log.info "already processed files are $alreadyProcessedFiles]"
 
-            boolean processFile = alreadyProcessedFiles.contains(file.fileNameOnly)
+            boolean processFile = !alreadyProcessedFiles.contains(file.fileNameOnly)
 
             if(processFile) {
                 log.info "file [$file.fileNameOnly] should be processed for loading table [$entityClass]"
