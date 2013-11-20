@@ -34,6 +34,10 @@ class EzproxyFileFilterService implements GenericFileFilter {
     boolean stacktrace
     @InjectArg(ignore = true)
     Class entityClass
+    @Lazy
+    Set<String> alreadyProcessedFiles = {
+        entityClass.executeQuery("select distinct fileName from ${entityClass.simpleName}") as Set<String>
+    }()
 
     GormService gormService
 
@@ -49,12 +53,8 @@ class EzproxyFileFilterService implements GenericFileFilter {
             assert entityClass && gormService : "entityClass and gormService must not be null"
 
             log.info "testing if file [$file.fileNameOnly] should be processed"
-            List result
-            entityClass.withTransaction {
-                result = entityClass.findAllByFileName(file.fileName)
-            }
 
-            boolean processFile = result == null || result.size() == 0
+            boolean processFile = alreadyProcessedFiles.contains(file.fileNameOnly)
 
             if(processFile) {
                 log.info "file [$file.fileNameOnly] should be processed for loading table [$entityClass]"
