@@ -51,6 +51,10 @@ class EzHosts extends EzproxyBase {
         organization(nullable: true)
     }
 
+    static mapping = {
+        patronId(index: "patronId_idx")
+    }
+
     @Override
     boolean acceptRecord(Map record) {
         truncateProperties(record,
