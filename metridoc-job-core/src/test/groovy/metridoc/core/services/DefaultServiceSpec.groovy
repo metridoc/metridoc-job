@@ -32,18 +32,9 @@ class DefaultServiceSpec extends Specification {
     def service = new DefaultServiceHelper()
 
     void "check enabling mergeMetridocConfig"() {
-        given:
+
+        when:
         def binding = new Binding()
-
-        when:
-        binding.includeService(ConfigService)
-        binding.includeService(DefaultServiceHelper)
-
-        then:
-        binding.configService.mergeMetridocConfig
-
-        when:
-        binding = new Binding()
         binding.args = ["-mergeMetridocConfig=false"] as String[]
         binding.includeService(ConfigService)
         binding.includeTool(DefaultServiceHelper)
