@@ -20,10 +20,8 @@ package metridoc.cli
 import groovy.io.FileType
 import metridoc.utils.JansiPrintWriter
 import org.fusesource.jansi.AnsiConsole
-import org.codehaus.groovy.runtime.StackTraceUtils
 import org.apache.commons.lang.exception.ExceptionUtils
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+
 
 /**
  * Created with IntelliJ IDEA on 8/5/13
@@ -82,16 +80,11 @@ class MetridocMain {
         def printMessage = "ERROR:\n"
 
         def exceptionMessages = []
-        String exceptionMatcher = /\.[a-zA-Z]*Exception/
-        def ignoredType = ignored.toString() =~ exceptionMatcher
-        exceptionMessages.add([ignoredType[0].toString().replace(".",""), ignored.message])
+        exceptionMessages.add([ignored.getClass().getSimpleName(), ignored.message])
 
         Throwable deeper = ignored
          while((deeper = ExceptionUtils.getCause(deeper)) != null){
-            def m = deeper.toString() =~ exceptionMatcher
-            def exception = m[0].toString().replace(".", "")
-            def exceptionMessage = deeper.message
-            exceptionMessages.add([exception, exceptionMessage])
+            exceptionMessages.add([deeper.getClass().getSimpleName(), deeper.message])
         }
 
         for(error in exceptionMessages){
