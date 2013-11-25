@@ -73,10 +73,16 @@ class ConfigService extends DefaultService {
     }
 
     protected void setDataFromFlags(Map argsMap) {
-        mergeMetridocConfig = argsMap.containsKey("mergeMetridocConfig") ?
-            Boolean.valueOf(argsMap.mergeMetridocConfig as String) : true
+        //if directly set to false (probably in testing) we skip this
+        if(mergeMetridocConfig) {
+            mergeMetridocConfig = argsMap.containsKey("mergeMetridocConfig") ?
+                Boolean.valueOf(argsMap.mergeMetridocConfig as String) : true
+        }
 
-        metridocConfigLocation = argsMap.metridocConfigLocation ?: METRIDOC_CONFIG
+        //if directly set (probably in testing), let's ignore all other settings
+        if (metridocConfigLocation == METRIDOC_CONFIG) {
+            metridocConfigLocation = argsMap.metridocConfigLocation ?: METRIDOC_CONFIG
+        }
     }
 
     void addCliConfigArgs(ConfigSlurper slurper, ConfigObject configObject) {
@@ -100,7 +106,11 @@ class ConfigService extends DefaultService {
 
     private static ConfigObject configureFromFile(File file, ConfigSlurper slurper) {
         if (file.exists()) {
-            return slurper.parse(file.toURI().toURL())
+            try {
+                return slurper.parse(file.toURI().toURL())
+            } catch (Throwable throwable) {
+                throw new IOException("Could not parse the configuration in [$file]", throwable)
+            }
         }
 
         return null

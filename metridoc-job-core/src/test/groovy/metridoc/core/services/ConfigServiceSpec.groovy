@@ -78,7 +78,7 @@ class ConfigServiceSpec extends Specification {
         def binding = new Binding()
 
         when:
-        def configTool = binding.includeService(ConfigService)
+        def configTool = binding.includeService(ConfigService, mergeMetridocConfig: false)
         configTool.binding.foo = "bar"
 
         then:
@@ -91,8 +91,7 @@ class ConfigServiceSpec extends Specification {
         binding.args = ["-config.foo.bar=5"] as String[]
 
         when:
-        def configTool
-        configTool = binding.includeService(ConfigService)
+        binding.includeService(ConfigService, mergeMetridocConfig: false)
         def config = binding.config
 
         then:
@@ -146,7 +145,6 @@ class ConfigServiceSpec extends Specification {
         Binding binding = new Binding()
 
         when:
-        def configService
         def args = ["-embeddedDataSource", "-mergeMetridocConfig=false"]
         binding.args = args as String[]
         binding.includeService(ConfigService)
