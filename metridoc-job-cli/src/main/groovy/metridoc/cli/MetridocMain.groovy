@@ -20,6 +20,8 @@ package metridoc.cli
 import groovy.io.FileType
 import metridoc.utils.JansiPrintWriter
 import org.fusesource.jansi.AnsiConsole
+import org.apache.commons.lang.exception.ExceptionUtils
+
 
 /**
  * Created with IntelliJ IDEA on 8/5/13
@@ -64,16 +66,32 @@ class MetridocMain {
             if (args.contains("-stacktrace") || args.contains("--stacktrace")) {
                 throw ignored //just rethrow it
             }
-            println ""
-            System.err.println("ERROR: $ignored.message, use --stacktrace to see more details")
-            println ""
-
+            printExceptionStack(ignored)
             if (exitOnFailure) {
                 System.exit(1)
             } else {
                 throw ignored
             }
         }
+    }
+
+    static void printExceptionStack(Throwable ignored){
+
+        def printMessage = "ERROR:\n"
+
+        def exceptionMessages = []
+        exceptionMessages.add([ignored.getClass().getSimpleName(), ignored.message])
+
+        Throwable deeper = ignored
+         while((deeper = ExceptionUtils.getCause(deeper)) != null){
+            exceptionMessages.add([deeper.getClass().getSimpleName(), deeper.message])
+        }
+
+        for(error in exceptionMessages){
+            printMessage+="\tCaused By ${error[0]}: ${error[1]}\n"
+        }
+        printMessage+="\nuse --stacktrace to see more details\n"
+        System.err.println(printMessage)
     }
 
     static void setPropertyValues(OptionAccessor options) {
