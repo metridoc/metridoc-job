@@ -218,7 +218,7 @@ class MetridocMain {
 
         if (!jobDir) {
             println ""
-            println "[$jobName] is not a recognized job"
+            println "ERROR: [$jobName] is not a recognized job"
             println ""
             System.exit(3)
         }
@@ -237,6 +237,10 @@ class MetridocMain {
     protected static void checkForAndInstallDependencies(OptionAccessor options) {
         if (!InstallMdocDependenciesCommand.dependenciesExist()) {
             InstallMdocDependenciesCommand.downloadDependencies()
+            println ""
+            println "Needed to download dependencies, please re-run the job"
+            println ""
+            System.exit(0)
         }
     }
 
