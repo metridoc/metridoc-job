@@ -30,7 +30,7 @@ class StackTraceSpec extends AbstractFunctionalSpec {
         then:
         exitCode == 1
         output.contains("ERROR:")
-        output.contains("Caused By")
+        output.contains("Caused by")
         !output.contains("15") //Default error message does not have line number
     }
 
