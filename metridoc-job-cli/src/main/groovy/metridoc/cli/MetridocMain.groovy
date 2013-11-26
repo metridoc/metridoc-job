@@ -88,7 +88,7 @@ class MetridocMain {
         }
 
         for(error in exceptionMessages){
-            printMessage+="\tCaused By ${error[0]}: ${error[1]}\n"
+            printMessage+="\tCaused by ${error[0]}: ${error[1]}\n"
         }
         printMessage+="\nuse --stacktrace to see more details\n"
         System.err.println(printMessage)
