@@ -31,7 +31,7 @@ class StackTraceSpec extends AbstractFunctionalSpec {
         exitCode == 1
         output.contains("ERROR:")
         output.contains("Caused by")
-        !output.contains("15") //Default error message does not have line number
+        !output.contains("groovy:15") //Default error message does not have line number
     }
 
     void "stacktrace flag should be injectable"() {
