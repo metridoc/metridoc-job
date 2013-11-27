@@ -112,12 +112,11 @@ class DataSourceConfigUtil {
     static Map getDataSourceProperties(ConfigObject config, String dataSourceName) {
         def dataSourceNameUsed = dataSourceName ?: DEFAULT_DATASOURCE
         def result = [:]
-        config."${dataSourceNameUsed}".with {
-            result.username = username
-            result.password = password
-            result.url = url
-            result.driverClassName = driverClassName
-        }
+        def dataSourceConfig = config."${dataSourceNameUsed}"
+        result.username = dataSourceConfig.username
+        result.password = dataSourceConfig.password
+        result.url = dataSourceConfig.url
+        result.driverClassName = dataSourceConfig.driverClassName
 
         def dataSourceProperties = config."${dataSourceNameUsed}".properties
         if (dataSourceProperties) {

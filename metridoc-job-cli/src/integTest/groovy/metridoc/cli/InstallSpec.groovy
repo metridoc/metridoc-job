@@ -27,10 +27,6 @@ import spock.lang.IgnoreRest
  */
 class InstallSpec extends AbstractFunctionalSpec {
 
-    def simpleJobUnversioned = new File("${System.getProperty("user.home")}/.metridoc/jobs/metridoc-job-simpleJob")
-    def simpleJobVersioned = new File("${System.getProperty("user.home")}/" +
-            ".metridoc/jobs/metridoc-job-simpleJob-master")
-
     @Rule
     public TemporaryFolder folder
 
@@ -59,12 +55,12 @@ class InstallSpec extends AbstractFunctionalSpec {
 
     void "test installing a directory"() {
         when:
-        def simpleJobUnversioned = new File("${folder.root.path}/metridoc-job-simpleJob")
+        def simpleJobUnVersioned = new File("${folder.root.path}/metridoc-job-simpleJob")
         int exitCode = runCommand(["--jobPath=${folder.root.path}","install", "src/testJobs/simpleJob"])
 
         then:
         0 == exitCode
-        simpleJobUnversioned.exists()
+        simpleJobUnVersioned.exists()
 
         when: "installing it again"
         exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "src/testJobs/simpleJob"])
@@ -72,7 +68,7 @@ class InstallSpec extends AbstractFunctionalSpec {
         then: "old one should be deleted, new one installed"
         output.contains("upgrading metridoc-job-simpleJob")
         0 == exitCode
-        simpleJobUnversioned.exists()
+        simpleJobUnVersioned.exists()
 
         when:
         if(!System.getProperty("os.name").contains("indows")) {
@@ -86,7 +82,7 @@ class InstallSpec extends AbstractFunctionalSpec {
         }
 
         cleanup:
-        simpleJobUnversioned.deleteDir()
+        simpleJobUnVersioned.deleteDir()
     }
 
     void "test installing from github"() {
@@ -116,7 +112,7 @@ class InstallSpec extends AbstractFunctionalSpec {
         0 == exitCode
 
         when:
-        exitCode = runCommand(["foo"])
+        exitCode = runCommand(["--jobPath=${folder.root.path}", "foo"])
 
         then:
         0 == exitCode
