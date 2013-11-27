@@ -22,6 +22,8 @@ import groovy.util.logging.Slf4j
 import metridoc.utils.DataSourceConfigUtil
 import org.apache.commons.lang.text.StrBuilder
 
+import java.sql.SQLException
+
 import static org.apache.commons.lang.SystemUtils.FILE_SEPARATOR
 import static org.apache.commons.lang.SystemUtils.USER_HOME
 
@@ -38,7 +40,7 @@ class ConfigService extends DefaultService {
         super.setBinding(binding)
         if (!binding.hasVariable("config")) {
             binding.includeService(ParseArgsService)
-            if(binding.hasVariable("argsMap")) {
+            if (binding.hasVariable("argsMap")) {
                 setDataFromFlags(binding.argsMap)
             }
 
@@ -74,7 +76,7 @@ class ConfigService extends DefaultService {
 
     protected void setDataFromFlags(Map argsMap) {
         //if directly set to false (probably in testing) we skip this
-        if(mergeMetridocConfig) {
+        if (mergeMetridocConfig) {
             mergeMetridocConfig = argsMap.containsKey("mergeMetridocConfig") ?
                 Boolean.valueOf(argsMap.mergeMetridocConfig as String) : true
         }
@@ -108,7 +110,8 @@ class ConfigService extends DefaultService {
         if (file.exists()) {
             try {
                 return slurper.parse(file.toURI().toURL())
-            } catch (Throwable throwable) {
+            }
+            catch (Throwable throwable) {
                 throw new IOException("Could not parse the configuration in [$file]", throwable)
             }
         }
@@ -137,32 +140,46 @@ class ConfigService extends DefaultService {
     void initiateDataSources(ConfigObject configObject) {
         def localMysql
         def embeddedDataSource
-        try {
-            if (binding.hasVariable("args")) {
-                localMysql = binding.args.find { it.contains("-localMysql") || it.contains("-localMySql")}
-                if (localMysql) {
-                    def dataSource = DataSourceConfigUtil.localMysqlDataSource
-                    binding.dataSource = dataSource
-                    binding.sql = new Sql(dataSource)
-                }
-
-                embeddedDataSource = binding.args.find { it.contains("-embeddedDataSource") }
-                if (embeddedDataSource) {
-                    def dataSource = DataSourceConfigUtil.embeddedDataSource
-                    binding.dataSource = dataSource
-                    binding.sql = new Sql(dataSource)
-                }
+        if (binding.hasVariable("args")) {
+            localMysql = binding.args.find { it.contains("-localMysql") || it.contains("-localMySql") }
+            if (localMysql) {
+                def dataSource = DataSourceConfigUtil.localMysqlDataSource
+                binding.dataSource = dataSource
+                binding.sql = new Sql(dataSource)
             }
-        }
-        catch (Throwable throwable) {
-            log.warn "Could not instantiate local data source", throwable
+
+            embeddedDataSource = binding.args.find { it.contains("-embeddedDataSource") }
+            if (embeddedDataSource) {
+                def dataSource = DataSourceConfigUtil.embeddedDataSource
+                binding.dataSource = dataSource
+                binding.sql = new Sql(dataSource)
+            }
         }
 
         DataSourceConfigUtil.getDataSourcesNames(configObject).each { String dataSourceName ->
-
-
-            try {
+            if (configObject[dataSourceName] instanceof ConfigObject) {
                 def dataSource = DataSourceConfigUtil.getDataSource(configObject, dataSourceName)
+                //just calling to test a conneciton
+                try {
+                    dataSource.getConnection()
+                }
+                catch (SQLException ex) {
+                    if(!configObject[dataSourceName].driverClassName) {
+                        throw new SQLException("[driverClassName] has not been set for data source [$dataSourceName]")
+                    }
+                    if(!configObject[dataSourceName].url) {
+                        throw new SQLException("[url] has not been set for data source [$dataSourceName]")
+                    }
+                    if(!configObject[dataSourceName].username) {
+                        throw new SQLException("[username] has not been set for data source [$dataSourceName]")
+                    }
+                    if(!configObject[dataSourceName].password) {
+                        throw new SQLException("[password] has not been set for data source [$dataSourceName]")
+                    }
+
+                    //don't know the cause, just throw it
+                    throw ex
+                }
                 def m = dataSourceName =~ /dataSource_(\w+)$/
                 def sqlName = "sql"
                 if (m.matches()) {
@@ -173,10 +190,6 @@ class ConfigService extends DefaultService {
 
                 binding."$dataSourceName" = dataSource
                 binding."$sqlName" = new Sql(dataSource)
-
-            }
-            catch (Throwable throwable) {
-                log.warn "Could not instantiate dataSource [$dataSourceName]", throwable
             }
         }
     }

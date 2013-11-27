@@ -23,6 +23,8 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
+import java.sql.SQLException
+
 /**
  * Created with IntelliJ IDEA on 7/2/13
  * @author Tommy Barker
@@ -114,6 +116,14 @@ class ConfigServiceSpec extends Specification {
         tool.binding.sql
         tool.binding.dataSource_foo
         tool.binding.sql_foo
+
+        when:
+        config.dataSource_bad = new ConfigObject()
+        tool.initiateDataSources(config)
+
+        then:
+        def ex = thrown(SQLException)
+        "[driverClassName] has not been set for data source [dataSource_bad]" == ex.message
     }
 
     void "config from flag overrides home config"() {
