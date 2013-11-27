@@ -94,7 +94,7 @@ class MetridocMain {
         System.err.println(printMessage)
     }
 
-    static void setPropertyValues(OptionAccessor options) {
+    void setPropertyValues(OptionAccessor options) {
         def commandLine = options.getInner()
         def cliOptions = commandLine.options
 
@@ -108,6 +108,12 @@ class MetridocMain {
                     System.setProperty(values[0], values[1])
                 }
             }
+        }
+
+        println options.jobPath
+        if(options.jobPath) {
+            jobPath = options.jobPath.startsWith("=") ? options.jobPath.substring(1) : options.jobPath
+            assert new File(jobPath).exists() : "jobPath [$jobPath] does not exist"
         }
     }
 
@@ -280,6 +286,7 @@ class MetridocMain {
         cli.logLevel(args: 1, argName: 'level', 'sets log level (info, error, etc.)')
         cli.logLineExt("make the log line more verbose")
         cli.lib(args: 1, argName: "directory", "add a directory of jars to classpath")
+        cli.jobPath(args:1, argName: "jobPath", "specify where jobs are stored")
         cli.plainText("disables ansi logging")
         def options = cli.parse(args)
         if (options.lib) {
