@@ -170,4 +170,13 @@ task testDependencyFile(dependsOn: "createDependencyFile") << {
     }
 }
 
+task updateVersionFile << {
+    def versionFile = new File(project.rootDir as File, "VERSION")
+    assert versionFile.exists() : "[VERSION] file should exist at root of project"
+    def version = versionFile.text.trim()
+    def mdocFile = new File(project.projectDir as File, "src/main/resources/MDOC_VERSION")
+    mdocFile.write(version)
+}
+
 compileGroovy.dependsOn "createDependencyFile"
+compileGroovy.dependsOn "updateVersionFile"
