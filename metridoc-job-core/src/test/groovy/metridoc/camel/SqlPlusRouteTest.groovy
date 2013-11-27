@@ -44,10 +44,10 @@ class SqlPlusRouteTest {
     void addEmbeddedDataSource() {
         embeddedDataSource = new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).build()
         def sql = new Sql(embeddedDataSource)
-        sql.execute("create table foo(name varchar(50), age int)")
-        sql.execute("create table bar(name varchar(50), age int)")
-        sql.execute("insert into foo values ('joe', 50)")
-        sql.execute("insert into foo values ('jack', 70)")
+        sql.execute("create table FOO(name varchar(50), age int)")
+        sql.execute("create table BAR(name varchar(50), age int)")
+        sql.execute("insert into FOO values ('joe', 50)")
+        sql.execute("insert into FOO values ('jack', 70)")
     }
 
     @After
@@ -61,12 +61,12 @@ class SqlPlusRouteTest {
         service.bind("dataSource", embeddedDataSource)
 
         service.with {
-            consumeNoWait("sqletl:foo?dataSource=dataSource") { ResultSet resultSet ->
-                send("sqletl:bar?dataSource=dataSource&logBatches=true", resultSet)
+            consumeNoWait("sqletl:FOO?dataSource=dataSource") { ResultSet resultSet ->
+                send("sqletl:BAR?dataSource=dataSource&logBatches=true", resultSet)
             }
         }
 
         def sql = new Sql(embeddedDataSource)
-        assert 2 == sql.firstRow("select count(*) as total from bar").total
+        assert 2 == sql.firstRow("select count(*) as total from BAR").total
     }
 }
