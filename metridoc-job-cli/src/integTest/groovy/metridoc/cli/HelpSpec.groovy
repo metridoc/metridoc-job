@@ -16,6 +16,9 @@
 
 
 package metridoc.cli
+
+import spock.lang.IgnoreRest
+
 /**
  * Created with IntelliJ IDEA on 8/14/13
  * @author Tommy Barker
@@ -91,7 +94,7 @@ class HelpSpec extends AbstractFunctionalSpec {
         then:
         0 == exitCode
         String lineSeparator = System.getProperty("line.separator")
-        output.startsWith(lineSeparator)
+        output.contains(lineSeparator + "usage")
         output.endsWith(lineSeparator)
     }
 
