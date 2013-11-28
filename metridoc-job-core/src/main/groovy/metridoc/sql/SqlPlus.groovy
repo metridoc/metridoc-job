@@ -21,7 +21,10 @@ import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.SQLException
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -162,13 +165,17 @@ class SqlPlus extends Sql {
                 slfLog.info "there is no data to insert"
                 return
             }
-            withTransaction { Connection connection ->
-                Map firstRecord = batch.get(0)
-                def sql = getInsertStatement(insertOrTable, firstRecord)
 
+            withTransaction { Connection connection ->
+                def colNames = []
+                DatabaseMetaData myDatabaseMetaData = connection.getMetaData();
+                ResultSet crs = myDatabaseMetaData.getColumns(null, null, insertOrTable, null)
+                while (crs.next()) {colNames.add(crs.getString("COLUMN_NAME")); }
+
+                def sortedParams = new TreeSet(colNames)
+                def sql = getInsertStatement(insertOrTable, sortedParams)
                 preparedStatement = connection.prepareStatement(sql)
 
-                def sortedParams = new TreeSet(firstRecord.keySet())
                 if (insertOrTable.split().size() > 1) {
                     sortedParams = orderedParamsFromInsert(insertOrTable)
                 }
@@ -176,6 +183,7 @@ class SqlPlus extends Sql {
                 batch.each { record ->
                     processRecord(preparedStatement, record, sortedParams)
                 }
+
                 slfLog.debug("finished adding {} records to batch, now the batch will be executed", batch.size())
                 result = preparedStatement.executeBatch()
                 logBatch(result, logEachBatch)
@@ -200,7 +208,10 @@ class SqlPlus extends Sql {
         }
 
         def params = []
-
+        def recordParams = new TreeSet(record.keySet())
+        if (recordParams != sortedParams){
+            throw new SQLException("Record keys ${recordParams} do not match column names ${sortedParams}")
+        }
         sortedParams.each {
             params.add(record[it])
         }
@@ -213,7 +224,14 @@ class SqlPlus extends Sql {
         slfLog.debug("adding {} to batch inserts", record)
     }
 
-    static String getInsertStatement(String tableOrInsert, Map values) {
+    /**
+     * @deprecated
+     */
+    static String getInsertStatement(String tableOrInsert, LinkedHashMap record) {
+        getInsertStatement(tableOrInsert, record.keySet() as TreeSet)
+    }
+
+    static String getInsertStatement(String tableOrInsert, TreeSet sortedParams) {
         def words = tableOrInsert.split()
 
         //must be an update statement of some sort (insert, update, etc.)
@@ -221,18 +239,17 @@ class SqlPlus extends Sql {
             return getInsertStatementFromParamInsert(tableOrInsert)
         }
 
-        return getInsertStatementForTable(tableOrInsert, values)
+        return getInsertStatementForTable(tableOrInsert, sortedParams)
     }
 
-    private static getInsertStatementForTable(String table, Map values) {
-        def sortedSet = new TreeSet(values.keySet())
+    private static getInsertStatementForTable(String table, TreeSet sortedParams) {
 
-        slfLog.debug("retrieving insert statement for table {} using record {}", table, values)
+        slfLog.debug("retrieving insert statement for table {} using record {}", table, sortedParams)
         StringBuffer insert = new StringBuffer("insert into ")
         StringBuffer valuesToInsert = new StringBuffer("values (")
         insert.append(table)
         insert.append(" (")
-        sortedSet.each { key ->
+        sortedParams.each { key ->
             insert.append(key)
             insert.append(", ")
             valuesToInsert.append("?")
