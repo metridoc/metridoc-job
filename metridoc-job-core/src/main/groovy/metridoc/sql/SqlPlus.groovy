@@ -224,6 +224,13 @@ class SqlPlus extends Sql {
         slfLog.debug("adding {} to batch inserts", record)
     }
 
+    /**
+     * @deprecated
+     */
+    static String getInsertStatement(String tableOrInsert, LinkedHashMap record) {
+        getInsertStatement(tableOrInsert, record.keySet() as TreeSet)
+    }
+
     static String getInsertStatement(String tableOrInsert, TreeSet sortedParams) {
         def words = tableOrInsert.split()
 
