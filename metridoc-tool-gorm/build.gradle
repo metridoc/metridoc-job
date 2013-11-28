@@ -1,6 +1,6 @@
 project.ext.description = "Provides tool to use gorm in metridoc jobs and scripts"
 
-def grailsVersion = "2.2.3"
+def grailsVersion = "2.2.4"
 
 dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.0.8',
