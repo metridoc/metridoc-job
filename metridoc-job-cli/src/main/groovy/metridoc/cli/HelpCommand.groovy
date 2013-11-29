@@ -58,6 +58,11 @@ class HelpCommand implements Command {
             println ""
             cliBuilder.usage()
             println ""
+            println "\n\nCommand to create a new job:\n\n" +
+                    "    git clone -bmetridoc-job-template https://github.com/metridoc/metridoc-job.git && \\\n" +
+                    "    (cd metridoc-job && git remote rm origin) && \\\n" +
+                    "    mv metridoc-job <job name>\n"
+
             def mdocVersion = this.class.classLoader.getResourceAsStream("MDOC_VERSION").getText("utf-8").trim()
             println "Currently using mdoc $mdocVersion"
             try {
@@ -67,7 +72,7 @@ class HelpCommand implements Command {
                 if(version != mdocVersion) {
                     println ""
                     println "version [$version] is available, to install run: "
-                    println "  [curl -s https://raw.github.com/metridoc/metridoc-job/master/install-mdoc.sh | sh]"
+                    println "    curl -s https://raw.github.com/metridoc/metridoc-job/master/install-mdoc.sh | sh"
                 }
             }
             catch (Exception ignore) {
