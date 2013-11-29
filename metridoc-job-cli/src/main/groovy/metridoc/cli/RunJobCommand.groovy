@@ -16,9 +16,8 @@
 package metridoc.cli
 
 import groovy.io.FileType
-import metridoc.utils.JansiPrintWriter
+
 import org.apache.commons.lang.SystemUtils
-import org.fusesource.jansi.AnsiConsole
 import org.slf4j.LoggerFactory
 
 import static metridoc.cli.MetridocMain.LONG_JOB_PREFIX

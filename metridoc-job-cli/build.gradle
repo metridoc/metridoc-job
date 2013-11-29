@@ -35,7 +35,7 @@ project.ext {
     bintrayRepo = "http://dl.bintray.com/upennlib/metridoc-distributions"
 }
 String[] compileDeps = ['org.codehaus.groovy:groovy-all:2.0.8', 'org.apache.commons:commons-compress:1.5',
-'commons-cli:commons-cli:1.2', 'org.slf4j:slf4j-simple:1.7.5', 'org.fusesource.jansi:jansi:1.2.1'] as String[]
+'commons-cli:commons-cli:1.2', 'ch.qos.logback:logback-classic:1.0.13', 'org.fusesource.jansi:jansi:1.2.1'] as String[]
 
 dependencies {
     //core libraries that are required to get the cli up and running
