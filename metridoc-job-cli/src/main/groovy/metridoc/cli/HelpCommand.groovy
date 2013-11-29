@@ -58,8 +58,21 @@ class HelpCommand implements Command {
             println ""
             cliBuilder.usage()
             println ""
-            def mdocVersion = this.class.classLoader.getResourceAsStream("MDOC_VERSION")
+            def mdocVersion = this.class.classLoader.getResourceAsStream("MDOC_VERSION").getText("utf-8").trim()
             println "Currently using mdoc $mdocVersion"
+            try {
+                def slurper = new XmlSlurper()
+                def metaData = slurper.parse("http://dl.bintray.com/upennlib/metridoc/com/github/metridoc/metridoc-job-core/maven-metadata.xml")
+                def version = metaData.versioning.release
+                if(version != mdocVersion) {
+                    println ""
+                    println "version [$version] is available, to install run: "
+                    println "  [curl -s https://raw.github.com/metridoc/metridoc-job/master/install-mdoc.sh | sh]"
+                }
+            }
+            catch (Exception ignore) {
+            }
+
             println ""
             return true
         }
