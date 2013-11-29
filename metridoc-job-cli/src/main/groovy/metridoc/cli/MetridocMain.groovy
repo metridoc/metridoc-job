@@ -17,11 +17,10 @@
 
 package metridoc.cli
 
+import ch.qos.logback.classic.Level
 import groovy.io.FileType
-import metridoc.utils.JansiPrintWriter
-import org.fusesource.jansi.AnsiConsole
 import org.apache.commons.lang.exception.ExceptionUtils
-
+import org.slf4j.LoggerFactory
 
 /**
  * Created with IntelliJ IDEA on 8/5/13
@@ -30,6 +29,9 @@ import org.apache.commons.lang.exception.ExceptionUtils
 class MetridocMain {
 
     public static final String LONG_JOB_PREFIX = "metridoc-job-"
+    public static boolean PLAIN_TEXT = false
+    public static Level LEVEL = null
+    public static boolean EXTENDED_LOG = false
     private static slash = System.getProperty("file.separator")
     def home = System.getProperty("user.home")
     String jobPath = "$home${slash}.metridoc${slash}jobs"
@@ -62,20 +64,23 @@ class MetridocMain {
 
             return runJob(options)
         }
-        catch (Throwable ignored) {
+        catch (Throwable throwable) {
             if (args.contains("-stacktrace") || args.contains("--stacktrace")) {
-                throw ignored //just rethrow it
+                def log = LoggerFactory.getLogger("metridoc.simple")
+                log.error ExceptionUtils.getStackTrace(throwable)
             }
-            printExceptionStack(ignored)
+            else {
+                printSimpleErrors(throwable)
+            }
             if (exitOnFailure) {
                 System.exit(1)
             } else {
-                throw ignored
+                throw throwable
             }
         }
     }
 
-    static void printExceptionStack(Throwable ignored){
+    static void printSimpleErrors(Throwable ignored){
 
         def printMessage = "ERROR:\n"
 
@@ -91,7 +96,8 @@ class MetridocMain {
             printMessage+="\tCaused by ${error[0]}: ${error[1]}\n"
         }
         printMessage+="\nuse --stacktrace to see more details\n"
-        System.err.println(printMessage)
+        def simpleLogger = LoggerFactory.getLogger("metridoc.simple")
+        simpleLogger.error(printMessage)
     }
 
     void setPropertyValues(OptionAccessor options) {
@@ -110,7 +116,6 @@ class MetridocMain {
             }
         }
 
-        println options.jobPath
         if(options.jobPath) {
             jobPath = options.jobPath.startsWith("=") ? options.jobPath.substring(1) : options.jobPath
             assert new File(jobPath).exists() : "jobPath [$jobPath] does not exist"
@@ -140,42 +145,16 @@ class MetridocMain {
 
     @SuppressWarnings("GrMethodMayBeStatic")
     protected void setupLogging(OptionAccessor options) {
-        if (!options.plainText) {
-            AnsiConsole.systemInstall()
-            System.out = new JansiPrintWriter(System.out)
-            System.err = new JansiPrintWriter(System.err)
-            Thread.addShutdownHook {
-                AnsiConsole.systemUninstall()
-            }
+        if (options.plainText) {
+            PLAIN_TEXT = true
         }
 
-        def simpleLoggerClass
-        try {
-            simpleLoggerClass = Thread.currentThread().contextClassLoader.loadClass("org.slf4j.impl.SimpleLogger")
-        }
-        catch (ClassNotFoundException ignored) {
-            System.err.println("Could not find SimpleLogger on the classpath, [SimpleLogger] will not be initialized")
-            return
-        }
-
-        String SHOW_THREAD_NAME_KEY = simpleLoggerClass.SHOW_THREAD_NAME_KEY
-        String SHOW_LOG_NAME_KEY = simpleLoggerClass.SHOW_LOG_NAME_KEY
-        String SHOW_DATE_TIME_KEY = simpleLoggerClass.SHOW_DATE_TIME_KEY
-        String LOG_FILE_KEY = simpleLoggerClass.LOG_FILE_KEY
-        System.setProperty(LOG_FILE_KEY, "System.out")
         if (options.logLevel) {
-            System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", options.logLevel)
-        }
-        else {
-            System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "error")
-            System.setProperty("org.slf4j.simpleLogger.log.metridoc", "info")
+            LEVEL = Level.toLevel((options.logLevel as String).toUpperCase(), Level.ERROR)
         }
 
-        System.setProperty(SHOW_DATE_TIME_KEY, "true")
-
-        if (!options.logLineExt) {
-            System.setProperty(SHOW_THREAD_NAME_KEY, "false")
-            System.setProperty(SHOW_LOG_NAME_KEY, "false")
+        if (options.logLineExt) {
+            EXTENDED_LOG = true
         }
     }
 
