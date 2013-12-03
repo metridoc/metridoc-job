@@ -80,13 +80,11 @@ class ResolveDoisService {
     protected Map processResponse(CrossRefResponse response, EzDoiJournal ezDoiJournal, Map stats) {
         assert !response.loginFailure: "Could not login into cross ref"
         if (response.malformedDoi || response.unresolved) {
-            ezDoiJournal.resolvableDoi = false
             stats.unresolvable += 1
             log.debug "Could not resolve doi $ezDoiJournal.doi, it was either malformed or unresolvable"
         } else if (response.statusException) {
             String message = "An exception occurred trying to resolve doi [$ezDoiJournal.doi]"
             logWarning(message, response.statusException)
-            ezDoiJournal.resolvableDoi = false
             stats.unresolvable += 1
         } else {
             ingestResponse(ezDoiJournal, response)
@@ -130,6 +128,7 @@ class ResolveDoisService {
                 ezDoiJournal."$key" = chosenValue
             }
         }
+        ezDoiJournal.resolvableDoi = true
     }
 
     /**

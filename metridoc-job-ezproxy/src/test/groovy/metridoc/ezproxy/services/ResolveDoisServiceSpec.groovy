@@ -43,6 +43,7 @@ class ResolveDoisServiceSpec extends Specification{
         1 == instance.printYear
         "foo" == instance.issue
         50 == instance.onlineYear
+        instance.resolvableDoi
     }
 
     void "test process response on CrossRefResponseException"() {
