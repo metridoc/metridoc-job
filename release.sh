@@ -15,8 +15,15 @@ if grep -q "\-SNAPSHOT" "VERSION"; then
     exit 0
 fi
 
-#releases to github
 PROJECT_VERSION=`cat VERSION`
+MDOC_VERSION=`cat metridoc-job-cli/src/main/resources/MDOC_VERSION`
+
+if [ $PROJECT_VERSION -ne $MDOC_VERSION ]; then
+    echo "project version and mdoc version are not equal, run [./gradlew compileGroovy] to update"
+    exit 1
+fi
+
+#releases to github
 echo ""
 echo "Releasing ${PROJECT_VERSION} to GitHub"
 echo ""
@@ -30,8 +37,10 @@ echo "Releasing ${PROJECT_VERSION} to BinTray"
 echo ""
 
 systemCall "./gradlew publishArchives publishDistribution bumpVersion"
+#fires off all the tasks for updating version according to new SNAPSHOT version
 systemCall "./gradlew compileGroovy"
 systemCall "git add VERSION"
+systemCall "git add metridoc-job-cli/src/main/resources/MDOC_VERSION"
 #this will update the DEPENDENCY_URLS file
 systemCall "git add metridoc-job-cli/src/main/resources/DEPENDENCY_URLS"
 systemCall "git commit -m 'committing a new version'"
