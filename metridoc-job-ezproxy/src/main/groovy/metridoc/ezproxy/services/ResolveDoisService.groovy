@@ -38,33 +38,31 @@ class ResolveDoisService {
 
     @Step(description = "resolves dois against crossref")
     void resolveDois() {
-        EzDoi.withTransaction {
+        EzDoiJournal.withTransaction {
 
             def stats = [
                     processed: 0,
-                    preexisting: 0,
                     unresolvable: 0,
                     total: 0
             ]
 
-            List ezDois = EzDoi.findAllByProcessedDoi(false, [max: doiResolutionCount])
+            List ezDoiJournals = EzDoiJournal.findAllByProcessedDoi(false, [max: doiResolutionCount])
 
-            if (ezDois) {
-                log.info "processing a batch of [${ezDois.size()}] dois"
-            }
-            else {
+            if (ezDoiJournals) {
+                log.info "processing a batch of [${ezDoiJournals.size()}] dois"
+            } else {
                 log.info "there are no dois to process"
                 return
             }
 
-            ezDois.each { EzDoi ezDoi ->
-                def response = crossRefService.resolveDoi(ezDoi.doi)
+            ezDoiJournals.each { EzDoiJournal ezDoiJournal ->
+                def response = crossRefService.resolveDoi(ezDoiJournal.doi)
                 try {
-                    stats = processResponse(response, ezDoi, stats)
+                    stats = processResponse(response, ezDoiJournal, stats)
                 }
                 catch (Throwable throwable) {
                     log.error """
-                        Could not save doi info for file: $ezDoi.fileName at line: $ezDoi.lineNumber
+                        Could not save doi info for file: $ezDoiJournal.fileName at line: $ezDoiJournal.lineNumber
 
                         Response from CrossRef:
                         $response
@@ -74,52 +72,40 @@ class ResolveDoisService {
                     throw throwable
                 }
 
-                ezDoi.processedDoi = true
-                ezDoi.save(failOnError: true)
+                ezDoiJournal.save(failOnError: true)
             }
         }
     }
 
-    protected Map processResponse(CrossRefResponse response, EzDoi ezDoi, Map stats) {
+    protected Map processResponse(CrossRefResponse response, EzDoiJournal ezDoiJournal, Map stats) {
         assert !response.loginFailure: "Could not login into cross ref"
         if (response.malformedDoi || response.unresolved) {
-            ezDoi.resolvableDoi = false
-            stats.unresolvable+=1
-            log.debug "Could not resolve doi $ezDoi.doi, it was either malformed or unresolvable"
-        }
-        else if (response.statusException) {
-            String message = "An exception occurred trying to resolve doi [$ezDoi.doi]"
+            ezDoiJournal.resolvableDoi = false
+            stats.unresolvable += 1
+            log.debug "Could not resolve doi $ezDoiJournal.doi, it was either malformed or unresolvable"
+        } else if (response.statusException) {
+            String message = "An exception occurred trying to resolve doi [$ezDoiJournal.doi]"
             logWarning(message, response.statusException)
-            ezDoi.resolvableDoi = false
+            ezDoiJournal.resolvableDoi = false
+            stats.unresolvable += 1
+        } else {
+            ingestResponse(ezDoiJournal, response)
+            stats.processed += 1
         }
-        else {
-            EzDoiJournal journal = EzDoiJournal.findByDoi(response.doi)
-            if (journal) {
-                stats.preexisting+=1
-                log.debug "doi ${response.doi} has already been processed"
-            }
-            else {
-                def ezJournal = new EzDoiJournal()
-                ingestResponse(ezJournal, response)
-                ezJournal.save(failOnError: true, flush: true)
-                stats.processed+=1
+        ezDoiJournal.processedDoi = true
 
-            }
-        }
-
-        if (stats.total %100 == 0){
+        if (stats.total % 100 == 0) {
             log.info "Record stats: [$stats]"
         }
-        
-        stats.total+=1
+
+        stats.total += 1
         return stats
     }
 
     protected void logWarning(String message, Exception statusException) {
         if (stacktrace) {
             log.warn message, statusException
-        }
-        else {
+        } else {
             log.warn "{}: {}", message, statusException.message
         }
     }
@@ -136,7 +122,7 @@ class ResolveDoisService {
                 def chosenValue = crossRefResponse."$key"
                 if (chosenValue instanceof String) {
                     chosenValue = TruncateUtils.truncate(chosenValue, TruncateUtils.DEFAULT_VARCHAR_LENGTH)
-                    if(key == "articleTitle" || key == "journalTitle") {
+                    if (key == "articleTitle" || key == "journalTitle") {
                         chosenValue = use4byte ? chosenValue : convertToBMP(chosenValue as String)
                     }
                 }
@@ -155,8 +141,8 @@ class ResolveDoisService {
      * @param text
      */
     String convertToBMP(String text) {
-        def response = text.replaceAll( "[\\ud800-\\udfff]", fourByteReplacement)
-        if(response.contains("_?_")) {
+        def response = text.replaceAll("[\\ud800-\\udfff]", fourByteReplacement)
+        if (response.contains("_?_")) {
             log.warn "text [$text] contains unsupportted characters"
         }
 

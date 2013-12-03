@@ -41,6 +41,8 @@ class EzDoiJournal {
     String electronicIssn
     String printIsbn
     String electronicIsbn
+    Boolean processedDoi = false
+    Boolean resolvableDoi = false
 
     static constraints = {
         doi(unique: true)
