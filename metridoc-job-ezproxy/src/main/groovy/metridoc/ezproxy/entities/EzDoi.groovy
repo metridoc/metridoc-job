@@ -29,17 +29,14 @@ import static metridoc.ezproxy.utils.TruncateUtils.truncateProperties
 @Entity
 class EzDoi extends EzproxyBase {
 
-    String doi
-    Boolean processedDoi = false
-    Boolean resolvableDoi = false
+    EzDoiJournal ezDoiJournal
 
     public static final transient DOI_PREFIX_PATTERN = "10."
     public static final transient DOI_PROPERTY_PATTERN = "doi=10."
-    public static final transient  DOI_FULL_PATTERN = Pattern.compile(/10\.\d+\//)
+    public static final transient DOI_FULL_PATTERN = Pattern.compile(/10\.\d+\//)
 
     static mapping = {
         runBaseMapping(delegate, it)
-        doi(index: true)
     }
 
     boolean acceptRecord(Map body) {
@@ -63,14 +60,25 @@ class EzDoi extends EzproxyBase {
             log.warn "Could not extract doi from $body.url", throwable
         }
         truncateProperties(body, "doi")
-        return body.doi != null
+        if(body.doi) {
+            body.ezDoiJournal = EzDoiJournal.findByDoi(body.doi)
+            if(body.ezDoiJournal == null) {
+                body.ezDoiJournal = new EzDoiJournal(
+                        doi:body.doi
+                )
+                body.ezDoiJournal.save(flush:true, failOnError: true)
+            }
+            return true
+        }
+
+        return false
     }
 
     @SuppressWarnings("GrMethodMayBeStatic")
     protected String extractDoi(String url) {
         String result = null
         int idxBegin = url.indexOf(DOI_PROPERTY_PATTERN)
-        boolean
+
         if (idxBegin > -1) {
             String doiBegin = url.substring(idxBegin + 4)
             int idxEnd = doiBegin.indexOf('&') > 0 ? doiBegin.indexOf('&') : doiBegin.size()
@@ -136,17 +144,18 @@ class EzDoi extends EzproxyBase {
 
     @Override
     String createNaturalKey() {
-        return "${ezproxyId}_#_${doi}"
+        return "${ezproxyId}_#_${ezDoiJournal.doi}"
     }
 
     @SuppressWarnings("UnnecessaryQualifiedReference")
     @Override
     boolean alreadyExists() {
-        def answer
+        boolean answer = false
         withTransaction {
-            answer = EzDoi.findByEzproxyIdAndDoi(ezproxyId, doi)
+            def ezDoi = EzDoi.findByEzproxyId(ezproxyId)
+            answer = ezDoi != null && ezDoi.ezDoiJournal.doi == ezDoiJournal.doi
         }
 
-        return answer != null
+        return answer
     }
 }

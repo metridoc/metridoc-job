@@ -45,6 +45,7 @@ switch (command) {
         return
     case "processDois":
         println "processing dois"
+        includeService(GormService).enableFor(EzDoiJournal, EzDoi)
         ingestFor(EzDoi)
         return
     case "resolveDois":

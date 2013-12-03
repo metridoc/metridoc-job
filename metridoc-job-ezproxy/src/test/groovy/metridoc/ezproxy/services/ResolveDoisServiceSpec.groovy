@@ -50,20 +50,21 @@ class ResolveDoisServiceSpec extends Specification{
         ResolveDoisService service = new ResolveDoisService()
         def stats = [
                 processed: 0,
-                preexisting: 0,
                 unresolvable: 0,
                 total: 0
         ]
-        EzDoi ezDoi = new EzDoi(doi: "foo")
+        EzDoi ezDoi = new EzDoi(ezDoiJournal: new EzDoiJournal(doi: "foo"))
         service.processResponse(
                 new CrossRefResponse(
                         statusException: new CrossRefResponseException(400, new URL("http://foo.bar"))
                 ),
-                ezDoi, stats
+                ezDoi.ezDoiJournal, stats
         )
 
         then:
-        !ezDoi.resolvableDoi
+        !ezDoi.ezDoiJournal.resolvableDoi
+        ezDoi.ezDoiJournal.processedDoi
+        1 == stats.unresolvable
     }
 
     void "test convert to BMP (ie all 4byte unicode to 3byte unicode"() {

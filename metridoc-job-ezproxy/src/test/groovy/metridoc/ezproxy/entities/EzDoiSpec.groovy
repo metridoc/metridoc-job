@@ -52,10 +52,12 @@ class EzDoiSpec extends Specification {
         given:
         def gormService = new GormService(embeddedDataSource: true)
         gormService.init()
-        gormService.enableFor(EzDoi)
+        gormService.enableFor(EzDoi, EzDoiJournal)
         EzDoi.withTransaction {
+            def journal = new EzDoiJournal(doi: "foo")
+            journal.save(failOnError: true)
             new EzDoi(
-                    doi: "foo",
+                    ezDoiJournal: journal,
                     ezproxyId: "bar",
                     fileName: "foobar",
                     lineNumber: 1,
@@ -69,12 +71,31 @@ class EzDoiSpec extends Specification {
 
         when:
         boolean exists = new EzDoi(
-                doi: "foo",
+                ezDoiJournal: new EzDoiJournal(doi: "foo"),
                 ezproxyId: "bar"
         ).alreadyExists()
 
         then:
         noExceptionThrown()
         exists
+    }
+
+    void "acceptRecord sets EzDoiJournal on ezDoiJournal"() {
+        given:
+        def gormService = new GormService(embeddedDataSource: true)
+        gormService.init()
+        gormService.enableFor(EzDoi, EzDoiJournal)
+
+        when:
+        def ezDoi = new EzDoi()
+        boolean accept
+        def record = [ezproxyId: "foobar", urlHost: "www.foo.com", url: "http://www.foo.com/doi=10.123/"]
+        EzDoi.withTransaction {
+            accept = ezDoi.acceptRecord(record)
+        }
+
+        then:
+        accept
+        "10.123/" == record.ezDoiJournal.doi
     }
 }
