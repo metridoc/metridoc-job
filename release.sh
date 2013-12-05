@@ -19,7 +19,7 @@ PROJECT_VERSION=`cat VERSION`
 MDOC_VERSION=`cat metridoc-job-cli/src/main/resources/MDOC_VERSION`
 
 if [ $PROJECT_VERSION -ne $MDOC_VERSION ]; then
-    echo "project version and mdoc version are not equal, run [./gradlew compileGroovy] to update"
+    echo "project version and mdoc version are not equal, run [./gradlew updateVersionFile] to update"
     exit 1
 fi
 
