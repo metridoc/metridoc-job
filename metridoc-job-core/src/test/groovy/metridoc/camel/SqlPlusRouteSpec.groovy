@@ -25,6 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType
+import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.ResultSet
@@ -36,37 +37,57 @@ import java.sql.ResultSet
  * Time: 10:00 AM
  * To change this template use File | Settings | File Templates.
  */
-class SqlPlusRouteTest {
+class SqlPlusRouteSpec extends Specification {
 
     DataSource embeddedDataSource
 
-    @Before
-    void addEmbeddedDataSource() {
+    void setup() {
         embeddedDataSource = new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).build()
         def sql = new Sql(embeddedDataSource)
-        sql.execute("create table FOO(name varchar(50), age int)")
-        sql.execute("create table BAR(name varchar(50), age int)")
+        sql.execute("create table FOO(\"name\" varchar(50), age int)")
+        sql.execute("create table BAR(NAME varchar(50), age int)")
         sql.execute("insert into FOO values ('joe', 50)")
         sql.execute("insert into FOO values ('jack', 70)")
     }
 
-    @After
-    void shutdownEmbeddedDatabase() {
+    void cleanup() {
         embeddedDataSource.shutdown()
     }
 
-    @Test
     void "test sql routing using the camel tool"() {
+        given:
         def service = new Binding().includeService(CamelService)
         service.bind("dataSource", embeddedDataSource)
 
+        when: "using table names"
         service.with {
             consumeNoWait("sqletl:FOO?dataSource=dataSource") { ResultSet resultSet ->
                 send("sqletl:BAR?dataSource=dataSource&logBatches=true", resultSet)
             }
         }
-
         def sql = new Sql(embeddedDataSource)
-        assert 2 == sql.firstRow("select count(*) as total from BAR").total
+
+        then:
+        2 == sql.firstRow("select count(*) as total from BAR").total
+
+        when: "using insert statements"
+        service.with {
+            consumeNoWait("sqletl:FOO?dataSource=dataSource") { ResultSet resultSet ->
+                send("sqletl:insert into BAR (name, age) values (:name, :age)?dataSource=dataSource&logBatches=true", resultSet)
+            }
+        }
+
+        then:
+        4 == sql.firstRow("select count(*) as total from BAR").total
+
+        when: "using select statements"
+        service.with {
+            consumeNoWait("sqletl:select * from Foo?dataSource=dataSource") { ResultSet resultSet ->
+                send("sqletl:insert into BAR (name, age) values (:name, :age)?dataSource=dataSource&logBatches=true", resultSet)
+            }
+        }
+
+        then:
+        6 == sql.firstRow("select count(*) as total from BAR").total
     }
 }

@@ -128,7 +128,7 @@ class SqlPlus extends Sql {
 
     private static List<String> orderedParamsFromInsert(String insert) {
         def m = (
-        insert =~ /:(\w+)|#(\w+)|\$(\w+)/
+                insert =~ /:(\w+)|#(\w+)|\$(\w+)/
         )
         def results = []
 
@@ -167,18 +167,25 @@ class SqlPlus extends Sql {
             }
 
             withTransaction { Connection connection ->
-                def colNames = []
-                DatabaseMetaData myDatabaseMetaData = connection.getMetaData();
-                ResultSet crs = myDatabaseMetaData.getColumns(null, null, insertOrTable, null)
-                while (crs.next()) {colNames.add(crs.getString("COLUMN_NAME")); }
 
-                def sortedParams = new TreeSet(colNames)
-                def sql = getInsertStatement(insertOrTable, sortedParams)
-                preparedStatement = connection.prepareStatement(sql)
+                def sortedParams
 
-                if (insertOrTable.split().size() > 1) {
+                def isInsert = insertOrTable.split().size() > 1
+                if (isInsert) {
                     sortedParams = orderedParamsFromInsert(insertOrTable)
                 }
+                else {
+                    def colNames = []
+                    DatabaseMetaData myDatabaseMetaData = connection.getMetaData();
+                    ResultSet crs = myDatabaseMetaData.getColumns(null, null, insertOrTable, null)
+                    while (crs.next()) {
+                        colNames.add(crs.getString("COLUMN_NAME"));
+                    }
+                    sortedParams = new TreeSet(colNames)
+                }
+
+                def sql = getInsertStatement(insertOrTable, sortedParams)
+                preparedStatement = connection.prepareStatement(sql)
 
                 batch.each { record ->
                     processRecord(preparedStatement, record, sortedParams)
@@ -208,16 +215,47 @@ class SqlPlus extends Sql {
         }
 
         def params = []
-        def recordParams = new TreeSet(record.keySet())
-        if (recordParams != sortedParams){
-            throw new SQLException("Record keys ${recordParams} do not match column names ${sortedParams}")
-        }
+
+        record = bestEffortOrdering(record, sortedParams)
+
         sortedParams.each {
             params.add(record[it])
         }
 
         setParameters(params, preparedStatement)
         preparedStatement.addBatch()
+    }
+
+    /**
+     * attempts to make the record keys equal sortedParams
+     *
+     * @param recordParams
+     * @param sortedParams
+     */
+    static protected LinkedHashMap bestEffortOrdering(Map record, Collection sortedParams) {
+        LinkedHashMap response = [:]
+        sortedParams.each { String paramName ->
+            if (!record.containsKey(paramName)) {
+                if (record.containsKey(paramName.toUpperCase())) {
+                    response[paramName] = record.remove(paramName.toUpperCase())
+                }
+                else if (record.containsKey(paramName.toLowerCase())) {
+                    response[paramName] = record.remove(paramName.toLowerCase())
+                }
+                else {
+                    response[paramName] = null
+                }
+            }
+            else {
+                response[paramName] = record.remove(paramName)
+            }
+        }
+
+        if(!record.isEmpty()) {
+            throw new SQLException("the contents of [$record] has data not mappable to params [$sortedParams]")
+        }
+
+        return response
     }
 
     private static void logRecordInsert(record) {
@@ -231,7 +269,7 @@ class SqlPlus extends Sql {
         getInsertStatement(tableOrInsert, record.keySet() as TreeSet)
     }
 
-    static String getInsertStatement(String tableOrInsert, TreeSet sortedParams) {
+    static String getInsertStatement(String tableOrInsert, Collection sortedParams) {
         def words = tableOrInsert.split()
 
         //must be an update statement of some sort (insert, update, etc.)
@@ -242,7 +280,7 @@ class SqlPlus extends Sql {
         return getInsertStatementForTable(tableOrInsert, sortedParams)
     }
 
-    private static getInsertStatementForTable(String table, TreeSet sortedParams) {
+    private static getInsertStatementForTable(String table, Collection sortedParams) {
 
         slfLog.debug("retrieving insert statement for table {} using record {}", table, sortedParams)
         StringBuffer insert = new StringBuffer("insert into ")
