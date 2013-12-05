@@ -24,7 +24,7 @@ class BdCallNumber {
     }
 
     static mapping = {
-        id name: callNumberId
+        id name: "callNumberId"
         requestNumber index: "request_number"
     }
 }

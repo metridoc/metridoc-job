@@ -1,6 +1,8 @@
 package metridoc.bd.services
 
 import metridoc.bd.entities.BdBibliography
+import metridoc.bd.entities.BdCallNumber
+import metridoc.bd.entities.BdExceptionCode
 import metridoc.core.Step
 import metridoc.service.gorm.GormService
 
@@ -13,7 +15,7 @@ class BdIngestionService {
 
     @Step(description = "create tables for Borrow Direct and EzBorrow")
     void createTables() {
-        gormService.enableFor(BdBibliography)
+        gormService.enableFor(BdBibliography, BdCallNumber, BdExceptionCode)
     }
 
     @Step(description = "runs entire Borrow Direct and Ez Borrow workflow", depends = ["createTables"])
