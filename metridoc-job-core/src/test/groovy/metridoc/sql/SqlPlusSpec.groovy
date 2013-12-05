@@ -73,4 +73,20 @@ class SqlPlusSpec extends Specification {
         then: "there will be an error"
         thrown SQLException
     }
+
+    void "test bestEffortOrdering"() {
+        given:
+        def record = [
+                bar: 1,
+                FOO: 2,
+                foobar: 3
+        ]
+        def params = ["BAR", "foo", "foobar"] as SortedSet
+
+        when:
+        def recordKeys = SqlPlus.bestEffortOrdering(record, params).keySet() as SortedSet
+
+        then:
+        recordKeys == params
+    }
 }
