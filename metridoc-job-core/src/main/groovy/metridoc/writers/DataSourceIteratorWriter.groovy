@@ -20,6 +20,9 @@ package metridoc.writers
 import groovy.util.logging.Slf4j
 import metridoc.iterators.Record
 import metridoc.iterators.RecordIterator
+import metridoc.sql.InsertMetaData
+import metridoc.sql.InsertableRecord
+import metridoc.sql.PreparedHandler
 import metridoc.sql.SqlPlus
 
 import javax.sql.DataSource
@@ -48,24 +51,27 @@ class DataSourceIteratorWriter extends DefaultIteratorWriter {
         assert dataSource != null: DATASOURCE_MESSAGE
         assert tableName != null: TABLE_NAME_ERROR
         assert recordIterator != null: ROW_ITERATOR_ERROR
-        def firstRow = recordIterator.peek()
-        def sortedParams = new TreeSet(firstRow.body.keySet())
         def headers = recordIterator.recordHeaders
-        headers.sortedParams = sortedParams
+        def handler = new PreparedHandler()
+        headers.preparedHandler = handler
 
         try {
             def totals = null
             try {
                 sql.withTransaction { Connection connection ->
-                    def sql = SqlPlus.getInsertStatement(tableName, firstRow.body)
-                    def preparedStatement = connection.prepareStatement(sql)
-                    headers.preparedStatement = preparedStatement
+                    def insertMetaData = new InsertMetaData(
+                            destination: tableName,
+                            connection: connection,
+                            sqlPlus: sql
+                    )
+                    headers.insertMetaData = insertMetaData
+
                     totals = super.write(recordIterator)
                     if (totals.fatalErrors) {
                         //throw the first one
                         throw totals.fatalErrors[0]
                     }
-                    totals.body.batchResponse = preparedStatement.executeBatch()
+                    totals.body.batchResponse = handler.executeBatches()
                 }
             }
             catch (Throwable throwable) {
@@ -85,10 +91,10 @@ class DataSourceIteratorWriter extends DefaultIteratorWriter {
     boolean doWrite(int lineNumber, Record record) {
         validateState(sql, "sqlPlus service cannot be null")
         def headers = record.headers
-
-        def preparedStatement = headers.preparedStatement as PreparedStatement
-        def sortedParams = headers.sortedParams
-        sql.processRecord(preparedStatement, record.body, sortedParams)
+        InsertMetaData metaData = headers.insertMetaData
+        def insertableRecord = new InsertableRecord(insertMetaData: metaData, originalRecord: record.body)
+        PreparedHandler handler = headers.preparedHandler
+        handler.addToStatement(insertableRecord)
 
         return true
     }
