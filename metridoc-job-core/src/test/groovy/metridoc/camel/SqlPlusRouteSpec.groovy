@@ -45,7 +45,7 @@ class SqlPlusRouteSpec extends Specification {
         embeddedDataSource = new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).build()
         def sql = new Sql(embeddedDataSource)
         sql.execute("create table FOO(\"name\" varchar(50), age int)")
-        sql.execute("create table BAR(NAME varchar(50), age int)")
+        sql.execute("create table BAR(NAME varchar(50), age int, occupation varchar(50) default 'foo')")
         sql.execute("insert into FOO values ('joe', 50)")
         sql.execute("insert into FOO values ('jack', 70)")
     }
@@ -66,9 +66,12 @@ class SqlPlusRouteSpec extends Specification {
             }
         }
         def sql = new Sql(embeddedDataSource)
+        def firstRecord = sql.firstRow("select * from BAR")
 
-        then:
+        then: "2 items are added and occupation gets the default"
+        noExceptionThrown()
         2 == sql.firstRow("select count(*) as total from BAR").total
+        "foo" == firstRecord.occupation
 
         when: "using insert statements"
         service.with {
@@ -78,6 +81,7 @@ class SqlPlusRouteSpec extends Specification {
         }
 
         then:
+        noExceptionThrown()
         4 == sql.firstRow("select count(*) as total from BAR").total
 
         when: "using select statements"
@@ -88,6 +92,7 @@ class SqlPlusRouteSpec extends Specification {
         }
 
         then:
+        noExceptionThrown()
         6 == sql.firstRow("select count(*) as total from BAR").total
     }
 }
