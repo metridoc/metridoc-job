@@ -53,9 +53,14 @@ class DataSourceIteratorWriterSpec extends Specification {
 
     def "test basic dataSource writing"() {
         when: "data is written to the foo table"
-        def results = iterator.toDataSource(dataSource, "foo")
+        def results = iterator.toDataSource(dataSource, "FOO")
+        def exception = results.fatalErrors ? results.fatalErrors[0] : null
+        if(exception) {
+            throw exception
+        }
 
         then: "foo will have data from the iterator stored"
+        noExceptionThrown()
         2 == sql.firstRow("select count(*) as total from foo").total
         2 == results.aggregateStats[WRITTEN]
         int[] batchResults = results as int[]
@@ -66,7 +71,7 @@ class DataSourceIteratorWriterSpec extends Specification {
 
     def "dataSource and tableName must be set"() {
         when: "a dataSource writer is created without a dataSource"
-        iterator.toDataSource(null, "foo")
+        iterator.toDataSource(null, "FOO")
 
         then: "an AssertionError is thrown"
         AssertionError error = thrown()
@@ -98,7 +103,7 @@ class DataSourceIteratorWriterSpec extends Specification {
         )
 
         when: "a record in a batch is too long"
-        def response = iterator1.toDataSource(dataSource, "foo")
+        def response = iterator1.toDataSource(dataSource, "FOO")
         def throwables = response.fatalErrors
 
         then: "a batch error occurs"

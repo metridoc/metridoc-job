@@ -37,11 +37,8 @@ import java.util.regex.Pattern
 class SqlPlus extends Sql {
     static final slfLog = LoggerFactory.getLogger(SqlPlus)
     static final PHASE_NAMES = "phaseName"
-    static final Set IGNORED_KEYS = [PHASE_NAMES, "order"]
 
-    def bulkSqlCalls
     boolean validate = false
-    boolean truncate = false
 
     SqlPlus(DataSource dataSource) {
         super(dataSource)
@@ -126,40 +123,14 @@ class SqlPlus extends Sql {
         runListBatch([batch], insertOrTable)
     }
 
-    private static List<String> orderedParamsFromInsert(String insert) {
-        def m = (
-                insert =~ /:(\w+)|#(\w+)|\$(\w+)/
-        )
-        def results = []
-
-        if (m.find()) {
-            m.each {
-                //colon
-                if (it[1] != null) {
-                    results.add(it[1])
-                }
-                //hash
-                if (it[2] != null) {
-                    results.add(it[2])
-                }
-                //dollar
-                if (it[3] != null) {
-                    results.add(it[3])
-                }
-            }
-        }
-
-        return results
-    }
-
     private runListBatch(List batch, String insertOrTable) {
         return runListBatch(batch, insertOrTable, false)
     }
 
     private runListBatch(List batch, String insertOrTable, boolean logEachBatch) {
 
-        PreparedStatement preparedStatement
         int[] result
+        def handler = new PreparedHandler()
         try {
             if (!batch) {
                 slfLog.info "there is no data to insert"
@@ -167,42 +138,31 @@ class SqlPlus extends Sql {
             }
 
             withTransaction { Connection connection ->
-
-                def sortedParams
-
-                def isInsert = insertOrTable.split().size() > 1
-                if (isInsert) {
-                    sortedParams = orderedParamsFromInsert(insertOrTable)
-                }
-                else {
-                    def colNames = []
-                    DatabaseMetaData myDatabaseMetaData = connection.getMetaData();
-                    ResultSet crs = myDatabaseMetaData.getColumns(null, null, insertOrTable, null)
-                    while (crs.next()) {
-                        colNames.add(crs.getString("COLUMN_NAME"));
-                    }
-                    sortedParams = new TreeSet(colNames)
-                }
-
-                def sql = getInsertStatement(insertOrTable, sortedParams)
-                preparedStatement = connection.prepareStatement(sql)
+                def insertMetaData = new InsertMetaData(connection: connection, destination: insertOrTable,
+                        sqlPlus: this)
 
                 batch.each { record ->
-                    processRecord(preparedStatement, record, sortedParams)
+                    def insertableRecord = new InsertableRecord(originalRecord: record, insertMetaData: insertMetaData)
+                    handler.addToStatement(insertableRecord)
                 }
 
                 slfLog.debug("finished adding {} records to batch, now the batch will be executed", batch.size())
-                result = preparedStatement.executeBatch()
+                result = handler.executeBatches()
                 logBatch(result, logEachBatch)
             }
         }
         finally {
-            closeResources(null, preparedStatement)
+            handler.preparedStatements.values().each { preparedStatement ->
+                closeResources(null, preparedStatement)
+            }
         }
 
         return result
     }
 
+    /**
+     * @deprecated
+     */
     void processRecord(PreparedStatement preparedStatement, record, sortedParams) {
 
         logRecordInsert(record)
@@ -251,7 +211,7 @@ class SqlPlus extends Sql {
             }
         }
 
-        if(!record.isEmpty()) {
+        if (!record.isEmpty()) {
             throw new SQLException("the contents of [$record] has data not mappable to params [$sortedParams]")
         }
 
