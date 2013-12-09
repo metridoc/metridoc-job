@@ -1,5 +1,6 @@
 package metridoc.sql
 
+import groovy.sql.GroovyRowResult
 import groovy.util.logging.Slf4j
 
 import java.sql.SQLException
@@ -15,7 +16,7 @@ class InsertableRecord {
     @Lazy(soft = true)
     LinkedHashMap<String, Object> transformedRecord = {
         LinkedHashMap response = [:]
-        def record = originalRecord.clone() as Map
+        Map record = new GroovyRowResult(originalRecord.clone())
         insertMetaData.sortedParams.each { String paramName ->
             if (!record.containsKey(paramName)) {
                 if (record.containsKey(paramName.toUpperCase())) {
