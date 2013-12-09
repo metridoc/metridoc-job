@@ -11,14 +11,14 @@ class InsertableRecordSpec extends Specification {
         given:
         def metaData = new InsertMetaData(
                 sortedParams: [
-                        "foo", "BAR", "baz"
+                        "foo_bar", "BAR", "baz"
                 ] as SortedSet<String> ,
                 columnsWithDefaults: []
         )
 
         def insertableRecordParams = [
                 originalRecord: [
-                        foo: "bar",
+                        FOO_bar: "bar",
                         bar: "foo"
                 ],
                 insertMetaData: metaData,
@@ -28,7 +28,7 @@ class InsertableRecordSpec extends Specification {
         def transformed = createInsertableRecord(insertableRecordParams).transformedRecord
 
         then:
-        [foo: "bar", BAR: "foo", baz: null] == transformed
+        [foo_bar: "bar", BAR: "foo", baz: null] == transformed
 
         when: "insert has columns with default records"
         def insert = createInsertableRecord(insertableRecordParams)
@@ -37,7 +37,7 @@ class InsertableRecordSpec extends Specification {
         transformed = insert.transformedRecord
 
         then: "the transformed record does not have them IF they are not in original record"
-        [foo: "bar", BAR: "foo"] == transformed
+        [foo_bar: "bar", BAR: "foo"] == transformed
     }
 
     InsertableRecord createInsertableRecord(LinkedHashMap params) {
