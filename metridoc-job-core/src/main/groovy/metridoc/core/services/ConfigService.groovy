@@ -182,8 +182,9 @@ class ConfigService extends DefaultService {
                         throw ex
                     }
                     catch (SQLException formatted) {
-                        String url = configObject[dataSourceName].url
-                        String message = "Could not connect to [${url ?: dataSourceName}] during configuration, if " +
+                        def url = configObject[dataSourceName].url
+                        def name = url ?: dataSourceName
+                        String message = "Could not connect to [${name}] during configuration, if " +
                                 "used in job it will likely fail: $formatted.message"
                         log.warn message
                     }

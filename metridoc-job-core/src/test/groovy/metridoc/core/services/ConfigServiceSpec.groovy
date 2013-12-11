@@ -122,8 +122,7 @@ class ConfigServiceSpec extends Specification {
         tool.initiateDataSources(config)
 
         then:
-        def ex = thrown(SQLException)
-        "[driverClassName] has not been set for data source [dataSource_bad]" == ex.message
+        noExceptionThrown()
     }
 
     void "config from flag overrides home config"() {
