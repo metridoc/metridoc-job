@@ -3,6 +3,8 @@ package metridoc.bd.services
 import metridoc.bd.entities.BdBibliography
 import metridoc.bd.entities.BdCallNumber
 import metridoc.bd.entities.BdExceptionCode
+import metridoc.bd.entities.BdInstitution
+import metridoc.bd.entities.BdMinShipDate
 import metridoc.core.Step
 import metridoc.service.gorm.GormService
 
@@ -15,7 +17,7 @@ class BdIngestionService {
 
     @Step(description = "create tables for Borrow Direct and EzBorrow")
     void createTables() {
-        gormService.enableFor(BdBibliography, BdCallNumber, BdExceptionCode)
+        gormService.enableFor(BdBibliography, BdCallNumber, BdExceptionCode, BdInstitution, BdMinShipDate)
     }
 
     @Step(description = "runs entire Borrow Direct and Ez Borrow workflow", depends = ["createTables"])
