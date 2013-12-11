@@ -26,5 +26,6 @@ class BdCallNumber {
     static mapping = {
         id name: "callNumberId"
         requestNumber index: "request_number"
+        version defaultValue: '0'
     }
 }

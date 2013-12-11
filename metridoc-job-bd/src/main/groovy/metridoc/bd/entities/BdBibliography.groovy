@@ -63,5 +63,6 @@ class BdBibliography {
         borrower index: "idx_bd_bibliography_borrower"
         lender index: "idx_bd_bibliography_lender"
         supplierCode index: "idx_bd_bibliography_supplier_code"
+        version defaultValue: '0'
     }
 }

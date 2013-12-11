@@ -15,4 +15,8 @@ class BdExceptionCode {
         exceptionCodeDesc(maxSize: 64, unique: true)
     }
 
+    static mapping = {
+        version defaultValue: '0'
+    }
+
 }
