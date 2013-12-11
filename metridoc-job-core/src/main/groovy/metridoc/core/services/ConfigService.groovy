@@ -138,8 +138,8 @@ class ConfigService extends DefaultService {
     }
 
     void initiateDataSources(ConfigObject configObject) {
-        def localMysql
-        def embeddedDataSource
+        def localMysql = null
+        def embeddedDataSource = null
         if (binding.hasVariable("args")) {
             localMysql = binding.args.find { it.contains("-localMysql") || it.contains("-localMySql") }
             if (localMysql) {
@@ -164,21 +164,29 @@ class ConfigService extends DefaultService {
                     dataSource.getConnection()
                 }
                 catch (SQLException ex) {
-                    if(!configObject[dataSourceName].driverClassName) {
-                        throw new SQLException("[driverClassName] has not been set for data source [$dataSourceName]")
-                    }
-                    if(!configObject[dataSourceName].url) {
-                        throw new SQLException("[url] has not been set for data source [$dataSourceName]")
-                    }
-                    if(!configObject[dataSourceName].username) {
-                        throw new SQLException("[username] has not been set for data source [$dataSourceName]")
-                    }
-                    if(!configObject[dataSourceName].password) {
-                        throw new SQLException("[password] has not been set for data source [$dataSourceName]")
-                    }
+                    try {
+                        if(!configObject[dataSourceName].driverClassName) {
+                            throw new SQLException("[driverClassName] has not been set for data source [$dataSourceName]")
+                        }
+                        if(!configObject[dataSourceName].url) {
+                            throw new SQLException("[url] has not been set for data source [$dataSourceName]")
+                        }
+                        if(!configObject[dataSourceName].username) {
+                            throw new SQLException("[username] has not been set for data source [$dataSourceName]")
+                        }
+                        if(!configObject[dataSourceName].password) {
+                            throw new SQLException("[password] has not been set for data source [$dataSourceName]")
+                        }
 
-                    //don't know the cause, just throw it
-                    throw ex
+                        //don't know the cause, just throw it
+                        throw ex
+                    }
+                    catch (SQLException formatted) {
+                        String url = configObject[dataSourceName].url
+                        String message = "Could not connect to [${url ?: dataSourceName}] during configuration, if " +
+                                "used in job it will likely fail: $formatted.message"
+                        log.warn message
+                    }
                 }
                 def m = dataSourceName =~ /dataSource_(\w+)$/
                 def sqlName = "sql"
