@@ -3,18 +3,22 @@ package metridoc.bd.entities
 import grails.persistence.Entity
 
 /**
- * Created by tbarker on 12/5/13.
+ * Created by tbarker on 12/11/13.
  */
 @Entity
 class BdInstitution {
     String catalogCode
     String institution
-    Long libraryId
-
+    Integer libraryId
 
     static constraints = {
-        catalogCode(maxSize: 1, unique: true)
-        institution(maxSize: 64, unique: true)
-        libraryId(unique: true)
+        libraryId unique: true
+        institution unique: true, maxSize: 64
+        catalogCode maxSize: 1
+    }
+
+    static mapping = {
+        version defaultValue: '0'
+        catalogCode defaultValue: ''
     }
 }
