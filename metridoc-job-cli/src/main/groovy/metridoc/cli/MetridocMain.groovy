@@ -50,6 +50,8 @@ class MetridocMain {
         try {
             setPropertyValues(options)
 
+            if (doImport(options)) return
+
             if (doHelp(cli, options)) return
 
             if (doListJobs(options)) return
@@ -78,6 +80,10 @@ class MetridocMain {
                 throw throwable
             }
         }
+    }
+
+    static boolean doImport(OptionAccessor optionAccessor) {
+        return new ImportJobsCommand().run(optionAccessor)
     }
 
     static void printSimpleErrors(Throwable ignored){
