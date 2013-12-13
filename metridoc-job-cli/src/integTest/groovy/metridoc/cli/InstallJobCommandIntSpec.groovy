@@ -25,7 +25,7 @@ import spock.lang.IgnoreRest
  * Created with IntelliJ IDEA on 8/15/13
  * @author Tommy Barker
  */
-class InstallSpec extends AbstractFunctionalSpec {
+class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
 
     @Rule
     public TemporaryFolder folder
