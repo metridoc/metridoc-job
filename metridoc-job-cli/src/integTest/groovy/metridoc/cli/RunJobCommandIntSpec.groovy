@@ -23,7 +23,7 @@ import spock.lang.IgnoreRest
  * Created with IntelliJ IDEA on 8/16/13
  * @author Tommy Barker
  */
-class RunJobSpec extends AbstractFunctionalSpec {
+class RunJobCommandIntSpec extends AbstractFunctionalSpec {
 
     def scriptLocation = "src/testJobs/script/simpleScript.groovy"
 

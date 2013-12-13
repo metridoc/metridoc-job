@@ -18,17 +18,33 @@
 package metridoc.cli
 
 /**
- * Created with IntelliJ IDEA on 9/7/13
  * @author Tommy Barker
  */
-class HibernateDataSourceSpec extends AbstractFunctionalSpec {
+class ListJobsCommandIntSpec extends AbstractFunctionalSpec {
 
-    void "localMysql and MergeConfig flags should work"() {
+    void "test list jobs"() {
         when:
-        int exitCode = runCommand(["--stacktrace", "src/testJobs/complexJob/metridoc-job-hibernate_gorm_tests", "--localMysql",
-                "--mergeMetridocConfig=false"])
+        runCommand(["install", "src/testJobs/metridoc-job-bar-0.1.zip"])
+        int exitCode = runCommand(["list-jobs"])
 
         then:
         0 == exitCode
+        output.contains("Available Jobs:")
+        output.contains(" --> bar (v0.1)")
+    }
+
+    void "test installing a job with no version"() {
+        when:
+        runCommand(["install", "src/testJobs/simpleJob"])
+        int exitCode = runCommand(["list-jobs"])
+
+        then:
+        0 == exitCode
+        output.contains("Available Jobs:")
+        output.contains(" --> simpleJob")
+
+        cleanup:
+        def home = System.getProperty("user.home")
+        new File("$home/.metridoc/jobs/metridoc-job-simpleJob").deleteDir()
     }
 }

@@ -17,30 +17,18 @@
 
 package metridoc.cli
 
-import spock.lang.Timeout
-
 /**
+ * Created with IntelliJ IDEA on 9/7/13
  * @author Tommy Barker
  */
-class InstallDepsSpec extends AbstractFunctionalSpec {
+class HibernateDataSourceIntSpec extends AbstractFunctionalSpec {
 
-    @Timeout(60)
-    void "test install deps"() {
-        given:
-        int exitCode
-
-        when: "install-deps is called"
-        exitCode = runCommand(["install-deps"])
+    void "localMysql and MergeConfig flags should work"() {
+        when:
+        int exitCode = runCommand(["--stacktrace", "src/testJobs/complexJob/metridoc-job-hibernate_gorm_tests", "--localMysql",
+                "--mergeMetridocConfig=false"])
 
         then:
         0 == exitCode
-        5 < new File("${System.getProperty('user.dir')}/build/install/mdoc/lib").list().size()
-
-        when: "install-deps is called again"
-        exitCode = runCommand(["install-deps"])
-
-        then:
-        0 == exitCode
-        output.contains("Dependencies have already been installed")
     }
 }

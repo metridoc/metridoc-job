@@ -72,11 +72,19 @@ class RunJobCommand implements Command {
             metridocScript = file
         }
         else if (file.isDirectory()) {
+            def mdoc = ImportJobsCommand.getMdoc(file)
+            if (mdoc.exists()) {
+                addImportsToClassPath(this.class.classLoader as URLClassLoader, mdoc)
+            }
             addDirectoryResourcesToClassPath(this.class.classLoader as URLClassLoader, file)
             metridocScript = getRootScriptFromDirectory(file)
         }
         else {
+            def mdoc = ImportJobsCommand.getMdoc(file)
             def jobDir = main.getJobDir(shortJobName)
+            if (mdoc.exists()) {
+                addImportsToClassPath(this.class.classLoader as URLClassLoader, mdoc)
+            }
             addDirectoryResourcesToClassPath(this.class.classLoader as URLClassLoader, jobDir)
             metridocScript = getRootScriptFromDirectory(jobDir, shortJobName)
         }
@@ -161,6 +169,12 @@ class RunJobCommand implements Command {
         }
 
         loader.addURL(file.toURI().toURL())
+    }
+
+    protected static void addImportsToClassPath(URLClassLoader loader, File mdoc) {
+        mdoc.eachDir {
+            addDirectoryResourcesToClassPath(loader, it)
+        }
     }
 
     protected File getRootScriptFromDirectory(File directory, String shortName = null) {
