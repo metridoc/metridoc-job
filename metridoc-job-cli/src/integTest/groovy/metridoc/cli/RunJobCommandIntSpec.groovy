@@ -16,9 +16,6 @@
 
 
 package metridoc.cli
-
-import spock.lang.IgnoreRest
-
 /**
  * Created with IntelliJ IDEA on 8/16/13
  * @author Tommy Barker
@@ -80,7 +77,7 @@ class RunJobCommandIntSpec extends AbstractFunctionalSpec {
 
     void "a bad job name should return a reasonable message"() {
         when:
-        int exitCode = runCommand(["--stacktrace", "asdasd"])
+        int exitCode = runCommand(["asdasd"])
 
         then:
         exitCode > 0
@@ -92,7 +89,7 @@ class RunJobCommandIntSpec extends AbstractFunctionalSpec {
         int exitCode = 0
         if (!System.getProperty("os.name").contains("indows")) {
             //this does not build in windows
-            exitCode = runCommand(["--stacktrace", "src/testJobs/simpleJob", "--embeddedDataSource"])
+            exitCode = runCommand(["src/testJobs/simpleJob", "--embeddedDataSource"])
         }
 
         then:
@@ -101,7 +98,7 @@ class RunJobCommandIntSpec extends AbstractFunctionalSpec {
     
     void "run a remote script"() {
         when:
-        int exitCode = runCommand(["--stacktrace", "https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/testJobs/script/simpleScript.groovy", "--embeddedDataSource", "--mergeMetridocConfig=false"])
+        int exitCode = runCommand(["https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/testJobs/script/simpleScript.groovy", "--embeddedDataSource", "--mergeMetridocConfig=false"])
 
         then:
         0 == exitCode
