@@ -23,7 +23,7 @@ import spock.lang.IgnoreRest
  * Created with IntelliJ IDEA on 8/14/13
  * @author Tommy Barker
  */
-class HelpSpec extends AbstractFunctionalSpec {
+class HelpIntSpec extends AbstractFunctionalSpec {
 
     void "test various implementations of help"() {
         given:

@@ -17,34 +17,23 @@
 
 package metridoc.cli
 
+import spock.lang.Specification
+
 /**
+ * Created with IntelliJ IDEA on 9/7/13
  * @author Tommy Barker
  */
-class ListJobsSpec extends AbstractFunctionalSpec {
+class GormIntSpec extends AbstractFunctionalSpec {
 
-    void "test list jobs"() {
+    void "basic gorm test"() {
+        int exitCode = 0
         when:
-        runCommand(["install", "src/testJobs/metridoc-job-bar-0.1.zip"])
-        int exitCode = runCommand(["list-jobs"])
+        if(!System.getProperty("os.name").contains("indows")) {
+            exitCode = runCommand(["--stacktrace", "src/testJobs/complexJob/metridoc-job-gorm",
+                    "--mergeMetridocConfig=false"])
+        }
 
         then:
         0 == exitCode
-        output.contains("Available Jobs:")
-        output.contains(" --> bar (v0.1)")
-    }
-
-    void "test installing a job with no version"() {
-        when:
-        runCommand(["install", "src/testJobs/simpleJob"])
-        int exitCode = runCommand(["list-jobs"])
-
-        then:
-        0 == exitCode
-        output.contains("Available Jobs:")
-        output.contains(" --> simpleJob")
-
-        cleanup:
-        def home = System.getProperty("user.home")
-        new File("$home/.metridoc/jobs/metridoc-job-simpleJob").deleteDir()
     }
 }

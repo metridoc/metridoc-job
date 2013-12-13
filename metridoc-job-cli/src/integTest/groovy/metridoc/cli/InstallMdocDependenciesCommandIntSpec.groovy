@@ -17,23 +17,30 @@
 
 package metridoc.cli
 
-import spock.lang.Specification
+import spock.lang.Timeout
 
 /**
- * Created with IntelliJ IDEA on 9/7/13
  * @author Tommy Barker
  */
-class GormSpec extends AbstractFunctionalSpec {
+class InstallMdocDependenciesCommandIntSpec extends AbstractFunctionalSpec {
 
-    void "basic gorm test"() {
-        int exitCode = 0
-        when:
-        if(!System.getProperty("os.name").contains("indows")) {
-            exitCode = runCommand(["--stacktrace", "src/testJobs/complexJob/metridoc-job-gorm",
-                    "--mergeMetridocConfig=false"])
-        }
+    @Timeout(60)
+    void "test install deps"() {
+        given:
+        int exitCode
+
+        when: "install-deps is called"
+        exitCode = runCommand(["install-deps"])
 
         then:
         0 == exitCode
+        5 < new File("${System.getProperty('user.dir')}/build/install/mdoc/lib").list().size()
+
+        when: "install-deps is called again"
+        exitCode = runCommand(["install-deps"])
+
+        then:
+        0 == exitCode
+        output.contains("Dependencies have already been installed")
     }
 }

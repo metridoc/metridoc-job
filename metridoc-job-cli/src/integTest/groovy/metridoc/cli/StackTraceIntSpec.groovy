@@ -21,7 +21,7 @@ package metridoc.cli
  * Created with IntelliJ IDEA on 8/29/13
  * @author Tommy Barker
  */
-class StackTraceSpec extends AbstractFunctionalSpec {
+class StackTraceIntSpec extends AbstractFunctionalSpec {
 
     void "by default just the error message is printed when a job has an error"() {
         when:
