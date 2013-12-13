@@ -25,7 +25,7 @@ class StackTraceIntSpec extends AbstractFunctionalSpec {
 
     void "by default just the error message is printed when a job has an error"() {
         when:
-        int exitCode = runCommand(["src/testJobs/script/errorScript.groovy"])
+        int exitCode = runCommand(["src/testJobs/script/errorScript.groovy"], false)
 
         then:
         exitCode == 1
@@ -36,14 +36,14 @@ class StackTraceIntSpec extends AbstractFunctionalSpec {
 
     void "stacktrace flag should be injectable"() {
         when: "stacktrace is an mdoc argument"
-        int exitCode = runCommand(["--stacktrace", "src/testJobs/script/injectableStackTrace.groovy"])
+        int exitCode = runCommand(["src/testJobs/script/injectableStackTrace.groovy"])
 
         then:
         0 == exitCode
         output.contains("stacktrace is injectable")
 
         when: "stacktrace is a job argument"
-        exitCode = runCommand(["src/testJobs/script/injectableStackTrace.groovy", "--stacktrace"])
+        exitCode = runCommand(["src/testJobs/script/injectableStackTrace.groovy"])
 
         then:
         0 == exitCode
