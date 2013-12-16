@@ -262,6 +262,7 @@ class MetridocMain {
                         " --> list-jobs                  lists all available jobs\n" +
                         " --> install <destination>      installs a job\n" +
                         " --> help [job name]            prints README of job, or this message\n" +
+                        " --> import-jobs                imports jobs from import.groovy\n" +
                         " --> install-deps               installs dependencies if they are not there"
         )
 
