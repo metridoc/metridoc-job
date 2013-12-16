@@ -80,7 +80,7 @@ class ImportJobsCommandSpec extends Specification {
     void "test retrieving import hash"() {
         when:
         Map<String, ImportUrl> importHash = ImportJobsCommand.getImportHash(
-                "foo=[url:'http://foo.com'];blam='baz';foobar=[noUrl:'blah'];bar=[url:'bad url']"
+                "foo=[url:'http://foo.com'];blam='baz';foobar=[noUrl:'blah']"
         )
 
         then:
