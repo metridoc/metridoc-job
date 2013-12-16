@@ -16,6 +16,7 @@
 package metridoc.cli
 
 import groovy.io.FileType
+import groovy.util.logging.Slf4j
 import metridoc.utils.ArchiveMethods
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory
 /**
  * @author Tommy Barker
  */
+@Slf4j
 class InstallJobCommand implements Command {
 
     public static final String LONG_JOB_PREFIX = "metridoc-job-"
@@ -126,6 +128,7 @@ class InstallJobCommand implements Command {
         }
 
         ArchiveMethods.unzip(destination, jobPathDir, optionSubDirectory)
+        importJobs(jobPathDir, destination)
         def filesToDelete = []
 
         jobPathDir.eachFile {
@@ -155,6 +158,11 @@ class InstallJobCommand implements Command {
         }
     }
 
+    void importJobs(File jobPath, File zipFile) {
+        File directoryOfZipFile = ArchiveMethods.convertZipNameToDirectory(jobPath, zipFile)
+        ImportJobsCommand.addImports(directoryOfZipFile)
+    }
+
     static protected getItemToInstall(String urlOrPath) {
         def fileToInstall
         try {
@@ -162,13 +170,18 @@ class InstallJobCommand implements Command {
         }
         catch (Throwable ignored) {
             fileToInstall = new File(urlOrPath)
-            assert fileToInstall.exists() && fileToInstall.isFile() && fileToInstall.name.endsWith(".zip"): "[$fileToInstall] is not a zip file"
+            assert fileToInstall.exists() : "[$fileToInstall] does not exist"
+            if (fileToInstall.isFile()) {
+                assert fileToInstall.name.endsWith(".zip"): "[$fileToInstall] is not a zip file"
+            }
         }
 
         return fileToInstall
     }
 
-    private static void installDirectoryJob(File file, File destination) {
-        FileUtils.copyDirectory(file, destination)
+    private static void installDirectoryJob(File directoryJob, File destination) {
+        FileUtils.copyDirectory(directoryJob, destination)
+        log.debug "installing dependencies for $directoryJob"
+        ImportJobsCommand.addImports(destination)
     }
 }

@@ -123,7 +123,7 @@ class InstallJobCommandSpec extends Specification {
 
         then:
         def error = thrown(AssertionError)
-        error.message.contains("[garbage] is not a zip file")
+        error.message.contains("[garbage] does not exist")
     }
 
 }

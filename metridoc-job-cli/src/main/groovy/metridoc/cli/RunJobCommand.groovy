@@ -16,7 +16,7 @@
 package metridoc.cli
 
 import groovy.io.FileType
-
+import groovy.util.logging.Slf4j
 import org.apache.commons.lang.SystemUtils
 import org.slf4j.LoggerFactory
 
@@ -26,6 +26,7 @@ import static metridoc.cli.MetridocMain.LONG_JOB_PREFIX
  * Created with IntelliJ IDEA on 10/25/13
  * @author Tommy Barker
  */
+@Slf4j
 class RunJobCommand implements Command {
     def lastResult
     MetridocMain main
@@ -72,6 +73,7 @@ class RunJobCommand implements Command {
             metridocScript = file
         }
         else if (file.isDirectory()) {
+            log.info "checking if [$file.canonicalPath] has mdoc directory"
             def mdoc = ImportJobsCommand.getMdoc(file)
             if (mdoc.exists()) {
                 addImportsToClassPath(this.class.classLoader as URLClassLoader, mdoc)
@@ -80,8 +82,9 @@ class RunJobCommand implements Command {
             metridocScript = getRootScriptFromDirectory(file)
         }
         else {
-            def mdoc = ImportJobsCommand.getMdoc(file)
+            log.info "checking if [$file.canonicalPath] has mdoc directory"
             def jobDir = main.getJobDir(shortJobName)
+            def mdoc = ImportJobsCommand.getMdoc(jobDir)
             if (mdoc.exists()) {
                 addImportsToClassPath(this.class.classLoader as URLClassLoader, mdoc)
             }
@@ -173,6 +176,7 @@ class RunJobCommand implements Command {
 
     protected static void addImportsToClassPath(URLClassLoader loader, File mdoc) {
         mdoc.eachDir {
+            log.info "adding directory [${it}] to classpath"
             addDirectoryResourcesToClassPath(loader, it)
         }
     }

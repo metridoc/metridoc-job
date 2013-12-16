@@ -142,5 +142,22 @@ class ArchiveMethods {
     private static void checkUnzipDestination(File file) {
         if (file && !file.isDirectory()) throw new IllegalArgumentException("'destination' has to be a directory.")
     }
+
+    static File convertZipNameToDirectory(File parent, File zipFile) {
+        def zipName = zipFile.name
+        def directoryName = zipName
+
+        if(zipName.endsWith(".zip")) {
+            def index = zipName.lastIndexOf(".zip")
+            directoryName = zipName.substring(0, index)
+        }
+
+        def directory = new File(parent, directoryName)
+        if (!directory.exists()) {
+            assert directory.mkdir() : "Could not create directory [$directory]"
+        }
+
+        return directory
+    }
 }
 

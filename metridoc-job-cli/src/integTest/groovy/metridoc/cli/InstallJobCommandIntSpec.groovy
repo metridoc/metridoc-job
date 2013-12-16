@@ -19,7 +19,6 @@ package metridoc.cli
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.IgnoreRest
 
 /**
  * Created with IntelliJ IDEA on 8/15/13
@@ -28,20 +27,20 @@ import spock.lang.IgnoreRest
 class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
 
     @Rule
-    public TemporaryFolder folder
+    public TemporaryFolder temporaryFolder
 
     void "test install job"() {
         when:
-        def bar1 = new File("${folder.root.path}/metridoc-job-bar-0.1")
-        def bar2 = new File("${folder.root.path}/metridoc-job-bar-0.2")
-        int exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "src/testJobs/metridoc-job-bar-0.1.zip"])
+        def bar1 = new File("${temporaryFolder.root.path}/metridoc-job-bar-0.1")
+        def bar2 = new File("${temporaryFolder.root.path}/metridoc-job-bar-0.2")
+        int exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "src/testJobs/metridoc-job-bar-0.1.zip"])
 
         then:
         0 == exitCode
         bar1.exists()
 
         when:
-        exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "src/testJobs/metridoc-job-bar-0.2.zip"])
+        exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "src/testJobs/metridoc-job-bar-0.2.zip"])
 
         then:
         0 == exitCode
@@ -55,15 +54,15 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
 
     void "test installing a directory"() {
         when:
-        def simpleJobUnVersioned = new File("${folder.root.path}/metridoc-job-simpleJob")
-        int exitCode = runCommand(["--jobPath=${folder.root.path}","install", "src/testJobs/simpleJob"])
+        def simpleJobUnVersioned = new File("${temporaryFolder.root.path}/metridoc-job-simpleJob")
+        int exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}","install", "src/testJobs/simpleJob"])
 
         then:
         0 == exitCode
         simpleJobUnVersioned.exists()
 
         when: "installing it again"
-        exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "src/testJobs/simpleJob"])
+        exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "src/testJobs/simpleJob"])
 
         then: "old one should be deleted, new one installed"
         output.contains("upgrading metridoc-job-simpleJob")
@@ -72,7 +71,7 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
 
         when:
         if(!System.getProperty("os.name").contains("indows")) {
-            exitCode = runCommand(["--jobPath=${folder.root.path}", "--stacktrace", "simpleJob", "--mergeMetridocConfig=false", "--embeddedDataSource"])
+            exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "simpleJob", "--mergeMetridocConfig=false", "--embeddedDataSource"])
         }
 
         then:
@@ -87,18 +86,18 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
 
     void "test installing from github"() {
         when:
-        int exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "https://github.com/metridoc/metridoc-job-illiad/archive/master.zip"])
+        int exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "https://github.com/metridoc/metridoc-job-illiad/archive/master.zip"])
 
         then:
         0 == exitCode
 
         when:
-        exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "https://github.com/metridoc/metridoc-job-illiad/archive/master.zip"])
+        exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "https://github.com/metridoc/metridoc-job-illiad/archive/master.zip"])
 
         then:
         0 == exitCode
         output.contains("upgrading metridoc-job-illiad")
-        new File("${folder.root.path}/metridoc-job-illiad-master").exists()
+        new File("${temporaryFolder.root.path}/metridoc-job-illiad-master").exists()
     }
 
     void "test installing from the current directory"() {
@@ -106,13 +105,13 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
         baseWorkDir = "src/testJobs/complexJob/metridoc-job-foo-0.1"
 
         when:
-        int exitCode = runCommand(["--jobPath=${folder.root.path}","install", "."])
+        int exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}","install", "."])
 
         then:
         0 == exitCode
 
         when:
-        exitCode = runCommand(["--jobPath=${folder.root.path}", "foo"])
+        exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "foo"])
 
         then:
         0 == exitCode
@@ -124,9 +123,9 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
 
     void "versioned and unversioned jobs should overrite each other"() {
         when:
-        def simpleJobUnversioned = new File("${folder.root.path}/metridoc-job-simpleJob")
-        def simpleJobVersioned = new File("${folder.root.path}/metridoc-job-simpleJob-master")
-        int exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "src/testJobs/simpleJob"])
+        def simpleJobUnversioned = new File("${temporaryFolder.root.path}/metridoc-job-simpleJob")
+        def simpleJobVersioned = new File("${temporaryFolder.root.path}/metridoc-job-simpleJob-master")
+        int exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "src/testJobs/simpleJob"])
 
         then:
         0 == exitCode
@@ -134,7 +133,7 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
         !simpleJobVersioned.exists()
 
         when:
-        exitCode = runCommand(["--jobPath=${folder.root.path}", "install", "src/testJobs/simpleJob-master"])
+        exitCode = runCommand(["--jobPath=${temporaryFolder.root.path}", "install", "src/testJobs/simpleJob-master"])
 
         then:
         0 == exitCode
@@ -144,5 +143,51 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
         cleanup:
         simpleJobUnversioned.deleteDir()
         simpleJobVersioned.deleteDir()
+    }
+
+    void "test install job with job imports"() {
+        setup:
+        File jobPath = temporaryFolder.newFolder("jobPath")
+        File jobLocation = temporaryFolder.newFolder("metridoc-job-fooImports")
+        File importFile = new File(jobLocation, "import.groovy")
+        importFile.createNewFile()
+        def path = "src/testJobs/complexJob.zip"
+        def complexJobPath = new File(path)
+        if (!complexJobPath.exists()) {
+            complexJobPath = new File("metridoc-job-cli/${path}")
+        }
+        importFile.text = "foo = [url: '${complexJobPath.toURI().toURL().toString()}', path: 'metridoc-job-gorm']"
+        def groovyDir = new File(jobLocation, "src/main/groovy")
+        groovyDir.mkdirs()
+        def metridocScript = new File(groovyDir, "metridoc.groovy")
+        metridocScript.createNewFile()
+        metridocScript.text = """
+            import metridoc.service.gorm.GormService
+            import foo.FooBar
+
+            configure()
+            includeService(GormService).enableFor(FooBar)
+        """
+
+        when:
+        int exitCode = runCommand(["--jobPath=${jobPath.canonicalPath}", "install", jobLocation.canonicalPath])
+
+        then:
+        def fooImportsDir = new File(jobPath, "metridoc-job-fooImports")
+        fooImportsDir.exists()
+        fooImportsDir.isDirectory()
+        def mdoc = new File(fooImportsDir, ".mdoc")
+        mdoc.isDirectory()
+        new File(mdoc, "metridoc-job-gorm").exists()
+
+        0 == exitCode
+        noExceptionThrown()
+
+        when:
+        exitCode = runCommand(["--jobPath=${jobPath.canonicalPath}", "fooImports", "--mergeMetridocConfig=false", "--embeddedDataSource"])
+
+        then:
+        0 == exitCode
+        noExceptionThrown()
     }
 }
