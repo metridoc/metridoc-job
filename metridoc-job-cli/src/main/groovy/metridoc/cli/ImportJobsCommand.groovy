@@ -52,6 +52,7 @@ class ImportJobsCommand implements Command {
                 String path = value.path
                 def url = value.url
                 File destination = getDestination(mdoc, url)
+                log.info "installing [$url] to [$destination]"
                 url.withInputStream { inputStream ->
                     BufferedOutputStream outputStream = destination.newOutputStream()
                     try {
@@ -127,18 +128,27 @@ class ImportJobsCommand implements Command {
 }
 
 
-
+@Slf4j
 class ImportUrl {
     URL url
     String path
 
     static ImportUrl create(Map data) {
+        def urlText = null
         try {
             if (data.containsKey("url")) {
-                return new ImportUrl(url: new URI(data.url).toURL(), path: data.path)
+                urlText = data.url
+                return new ImportUrl(url: new URI(urlText).toURL(), path: data.path)
             }
-        } catch (URISyntaxException ignored) {
-            return null
+        } catch (Throwable t) {
+            def file = new File(urlText)
+            if(file.exists()) {
+                return new ImportUrl(url: file.toURI().toURL(), path: data.path)
+            }
+            log.error "Could not process url [$urlText]"
+            throw t
         }
+
+        return null
     }
 }

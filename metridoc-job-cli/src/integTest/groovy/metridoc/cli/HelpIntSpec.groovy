@@ -16,9 +16,6 @@
 
 
 package metridoc.cli
-
-import spock.lang.IgnoreRest
-
 /**
  * Created with IntelliJ IDEA on 8/14/13
  * @author Tommy Barker

@@ -16,6 +16,7 @@
 package metridoc.cli
 
 import org.junit.Rule
+import org.junit.contrib.java.lang.system.Assertion
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
@@ -29,10 +30,32 @@ class InstallJobCommandSpec extends Specification {
     @Rule
     TemporaryFolder temporaryFolder = new TemporaryFolder()
 
+    void "test cliArgs validation"() {
+        when:
+        InstallJobCommand.validateCliArgs(["foo", "bar"])
+
+        then:
+        noExceptionThrown()
+
+        when:
+        InstallJobCommand.validateCliArgs(["foo", "bar", "baz"])
+
+        then:
+        noExceptionThrown()
+
+        when:
+        InstallJobCommand.validateCliArgs(["foo"])
+
+        then:
+        def error = thrown(AssertionError)
+        error.message.contains(InstallJobCommand.BAD_CLI_ARGS)
+    }
 
     void "job path must be set"() {
         when:
-        new InstallJobCommand().run(emptyOptions)
+        def main = new MetridocMain()
+        main.jobPath = null
+        new InstallJobCommand(main: main).run(emptyOptions)
 
         then:
         thrown(AssertionError)
@@ -80,4 +103,27 @@ class InstallJobCommandSpec extends Specification {
         then:
         "gorm ran" == response
     }
+
+    void "test getItemToInstall"() {
+        when:
+        def toInstall = InstallJobCommand.getItemToInstall("http://foo.com")
+
+        then:
+        toInstall instanceof URL
+
+        when:
+        File zipFile = temporaryFolder.newFile("bar.zip")
+        toInstall = InstallJobCommand.getItemToInstall(zipFile.path)
+
+        then:
+        toInstall instanceof File
+
+        when:
+        InstallJobCommand.getItemToInstall("garbage")
+
+        then:
+        def error = thrown(AssertionError)
+        error.message.contains("[garbage] does not exist")
+    }
+
 }

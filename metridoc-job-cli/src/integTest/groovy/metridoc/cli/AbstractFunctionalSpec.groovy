@@ -34,7 +34,16 @@ class AbstractFunctionalSpec extends Specification {
 
     protected final env = [:]
 
-    int runCommand(List cmdList, List inputs = []) {
+    int runCommand(List args, List inputs = []) {
+        runCommand(args, true, inputs)
+    }
+
+    int runCommand(List args, boolean stacktrace, List inputs = []) {
+        def cmdList = ["--plainText"]
+        if(stacktrace) {
+            cmdList << "--stacktrace"
+        }
+        cmdList.addAll(args)
         resetOutput()
 
         def mdocExecutablePath = System.getProperty("user.dir") + "/build/install/mdoc/bin/mdoc"

@@ -19,8 +19,6 @@ package metridoc.cli
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import org.springframework.context.ApplicationContext
-import spock.lang.IgnoreRest
 import spock.lang.Specification
 
 /**

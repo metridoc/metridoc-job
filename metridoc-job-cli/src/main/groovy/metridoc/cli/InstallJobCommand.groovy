@@ -16,6 +16,7 @@
 package metridoc.cli
 
 import groovy.io.FileType
+import groovy.util.logging.Slf4j
 import metridoc.utils.ArchiveMethods
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -25,22 +26,24 @@ import org.slf4j.LoggerFactory
 /**
  * @author Tommy Barker
  */
+@Slf4j
 class InstallJobCommand implements Command {
 
     public static final String LONG_JOB_PREFIX = "metridoc-job-"
+    public static final String BAD_CLI_ARGS = "when installing a job, " +
+            "[install] requires a location and optionally a sub directory in a zip file"
     MetridocMain main
 
     @Override
     boolean run(OptionAccessor options) {
-        assert main && main.jobPath : "main and main.jobPath must be set"
+        assert main.jobPath : "main and main.jobPath must be set"
         assert options != null : "options must not be null"
         def cliArgs = options.arguments()
 
         def command = cliArgs[0]
         if (command == "install") {
-            assert cliArgs.size() == 2 || cliArgs.size() == 3: "when installing a job, " +
-                    "[install] requires a location and optionally a sub directory in a zip file"
-            if (cliArgs.size() == 1) {
+            validateCliArgs(cliArgs)
+            if (cliArgs.size() == 2) {
                 installJob(cliArgs[1], null)
             }
             else {
@@ -51,6 +54,10 @@ class InstallJobCommand implements Command {
         }
 
         return false
+    }
+
+    protected static void validateCliArgs(List<String> cliArgs) {
+        assert cliArgs.size() == 2 || cliArgs.size() == 3: BAD_CLI_ARGS
     }
 
     void installJob(String urlOrPath, String optionSubDirectory) {
@@ -97,23 +104,11 @@ class InstallJobCommand implements Command {
         def destination = new File(jobPathDir, destinationName)
         def fileToInstall
 
-        try {
-            fileToInstall = new URL(urlOrPath)
-        }
-        catch (Throwable ignored) {
-            fileToInstall = new File(urlOrPath)
-            if (fileToInstall.exists() && fileToInstall.isDirectory()) {
-                installDirectoryJob(fileToInstall, destination)
-                return
-            }
+        fileToInstall = getItemToInstall(urlOrPath)
 
-            def supported = fileToInstall.exists() && fileToInstall.isFile() && fileToInstall.name.endsWith(".zip")
-            if (!supported) {
-                println ""
-                println "$fileToInstall is not a zip file"
-                println ""
-                System.exit(2)
-            }
+        if (fileToInstall instanceof File && fileToInstall.exists() && fileToInstall.isDirectory()) {
+            installDirectoryJob(fileToInstall, destination)
+            return
         }
 
         if (!destinationName.endsWith(".zip")) {
@@ -133,6 +128,7 @@ class InstallJobCommand implements Command {
         }
 
         ArchiveMethods.unzip(destination, jobPathDir, optionSubDirectory)
+        importJobs(jobPathDir, destination)
         def filesToDelete = []
 
         jobPathDir.eachFile {
@@ -162,7 +158,30 @@ class InstallJobCommand implements Command {
         }
     }
 
-    private static void installDirectoryJob(File file, File destination) {
-        FileUtils.copyDirectory(file, destination)
+    void importJobs(File jobPath, File zipFile) {
+        File directoryOfZipFile = ArchiveMethods.convertZipNameToDirectory(jobPath, zipFile)
+        ImportJobsCommand.addImports(directoryOfZipFile)
+    }
+
+    static protected getItemToInstall(String urlOrPath) {
+        def fileToInstall
+        try {
+            fileToInstall = new URL(urlOrPath)
+        }
+        catch (Throwable ignored) {
+            fileToInstall = new File(urlOrPath)
+            assert fileToInstall.exists() : "[$fileToInstall] does not exist"
+            if (fileToInstall.isFile()) {
+                assert fileToInstall.name.endsWith(".zip"): "[$fileToInstall] is not a zip file"
+            }
+        }
+
+        return fileToInstall
+    }
+
+    private static void installDirectoryJob(File directoryJob, File destination) {
+        FileUtils.copyDirectory(directoryJob, destination)
+        log.debug "installing dependencies for $directoryJob"
+        ImportJobsCommand.addImports(destination)
     }
 }
