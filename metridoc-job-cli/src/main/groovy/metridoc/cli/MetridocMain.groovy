@@ -50,8 +50,6 @@ class MetridocMain {
         try {
             setPropertyValues(options)
 
-            if (doImport(options)) return
-
             if (doHelp(cli, options)) return
 
             if (doListJobs(options)) return
@@ -61,6 +59,8 @@ class MetridocMain {
             if (doInstallDeps(options)) return
 
             checkForAndInstallDependencies(options)
+
+            if (doImport(options)) return
 
             if (doInstall(options)) return
 
