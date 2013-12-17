@@ -144,15 +144,27 @@ class ArchiveMethods {
     }
 
     static File convertZipNameToDirectory(File parent, File zipFile) {
-        def zipName = zipFile.name
-        def directoryName = zipName
+        convertZipNameToDirectory(parent, zipFile, null)
+    }
 
-        if(zipName.endsWith(".zip")) {
-            def index = zipName.lastIndexOf(".zip")
-            directoryName = zipName.substring(0, index)
+    static File convertZipNameToDirectory(File parent, File zipFile, String subPath) {
+        def directory
+        if(subPath) {
+            directory = new File(parent, subPath)
+        }
+        else {
+            def zipName = zipFile.name
+            def directoryName = zipName
+
+            if(zipName.endsWith(".zip")) {
+                def index = zipName.lastIndexOf(".zip")
+                directoryName = zipName.substring(0, index)
+            }
+
+
+            directory = new File(parent, directoryName)
         }
 
-        def directory = new File(parent, directoryName)
         if (!directory.exists()) {
             assert directory.mkdir() : "Could not create directory [$directory]"
         }

@@ -91,6 +91,7 @@ class InstallJobCommandSpec extends Specification {
         then:
         noExceptionThrown()
         new File(temporaryFolder.root, "metridoc-job-gorm").exists()
+        1 == temporaryFolder.root.listFiles().size()
 
         when:
         main = new MetridocMain(
@@ -125,5 +126,4 @@ class InstallJobCommandSpec extends Specification {
         def error = thrown(AssertionError)
         error.message.contains("[garbage] does not exist")
     }
-
 }
