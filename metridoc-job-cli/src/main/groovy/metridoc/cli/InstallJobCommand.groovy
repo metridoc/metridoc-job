@@ -128,7 +128,7 @@ class InstallJobCommand implements Command {
         }
 
         ArchiveMethods.unzip(destination, jobPathDir, optionSubDirectory)
-        importJobs(jobPathDir, destination)
+        importJobs(jobPathDir, destination, optionSubDirectory)
         def filesToDelete = []
 
         jobPathDir.eachFile {
@@ -158,8 +158,8 @@ class InstallJobCommand implements Command {
         }
     }
 
-    void importJobs(File jobPath, File zipFile) {
-        File directoryOfZipFile = ArchiveMethods.convertZipNameToDirectory(jobPath, zipFile)
+    void importJobs(File jobPath, File zipFile, String subPath) {
+        File directoryOfZipFile = ArchiveMethods.convertZipNameToDirectory(jobPath, zipFile, subPath)
         ImportJobsCommand.addImports(directoryOfZipFile)
     }
 
