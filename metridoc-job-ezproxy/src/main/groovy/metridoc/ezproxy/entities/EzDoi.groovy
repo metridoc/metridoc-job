@@ -150,12 +150,17 @@ class EzDoi extends EzproxyBase {
     @SuppressWarnings("UnnecessaryQualifiedReference")
     @Override
     boolean alreadyExists() {
-        boolean answer = false
+        def results = []
         withTransaction {
-            def ezDoi = EzDoi.findByEzproxyId(ezproxyId)
-            answer = ezDoi != null && ezDoi.ezDoiJournal.doi == ezDoiJournal.doi
+            def criteria = EzDoi.createCriteria()
+            results = criteria {
+                eq("ezproxyId", ezproxyId)
+                ezDoiJournal {
+                    eq("doi", ezDoiJournal.doi)
+                }
+            }
         }
 
-        return answer
+        return results.size() > 0
     }
 }
