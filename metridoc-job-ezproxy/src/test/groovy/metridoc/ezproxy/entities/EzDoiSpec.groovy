@@ -53,31 +53,42 @@ class EzDoiSpec extends Specification {
         def gormService = new GormService(embeddedDataSource: true)
         gormService.init()
         gormService.enableFor(EzDoi, EzDoiJournal)
+        def defaultParams = [
+                ezproxyId: "bar",
+                fileName: "foobar",
+                lineNumber: 1,
+                proxyDate: new Date(),
+                proxyDay: 1,
+                proxyMonth: 1,
+                proxyYear: 2012,
+                urlHost: "http://foo.com"
+        ]
+        defaultParams.ezDoiJournal = new EzDoiJournal(doi: "foo")
         EzDoi.withTransaction {
-            def journal = new EzDoiJournal(doi: "foo")
-            journal.save(failOnError: true)
-            new EzDoi(
-                    ezDoiJournal: journal,
-                    ezproxyId: "bar",
-                    fileName: "foobar",
-                    lineNumber: 1,
-                    proxyDate: new Date(),
-                    proxyDay: 1,
-                    proxyMonth: 1,
-                    proxyYear: 2012,
-                    urlHost: "http://foo.com"
-            ).save(failOnError: true)
+            defaultParams.ezDoiJournal.save(failOnError: true)
+            new EzDoi(defaultParams).save(failOnError: true)
+        }
+        defaultParams.ezDoiJournal = new EzDoiJournal(doi: "bar")
+        EzDoi.withTransaction {
+            defaultParams.ezDoiJournal.save(failOnError: true)
+            new EzDoi(defaultParams).save(failOnError: true)
         }
 
-        when:
-        boolean exists = new EzDoi(
+        expect:
+        new EzDoi(
                 ezDoiJournal: new EzDoiJournal(doi: "foo"),
                 ezproxyId: "bar"
         ).alreadyExists()
 
-        then:
-        noExceptionThrown()
-        exists
+        new EzDoi(
+                ezDoiJournal: new EzDoiJournal(doi: "bar"),
+                ezproxyId: "bar"
+        ).alreadyExists()
+
+        !new EzDoi(
+                ezDoiJournal: new EzDoiJournal(doi: "foobar"),
+                ezproxyId: "bar"
+        ).alreadyExists()
     }
 
     void "acceptRecord sets EzDoiJournal on ezDoiJournal"() {
