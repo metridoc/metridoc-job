@@ -55,6 +55,7 @@ dependencies {
     }
 
     //other helpful libraries
+    provided 'com.h2database:h2:1.3.170'
     provided 'org.apache.commons:commons-email:1.3.1'
     provided 'org.apache.poi:poi:3.8-beta3'
     provided ('org.apache.poi:poi-ooxml:3.8-beta3') {

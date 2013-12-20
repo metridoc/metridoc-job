@@ -28,7 +28,6 @@ import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.SystemUtils
 import org.hibernate.SessionFactory
 import org.springframework.context.ApplicationContext
-import org.springframework.context.support.FileSystemXmlApplicationContext
 import org.springframework.util.ClassUtils
 
 import java.text.SimpleDateFormat
@@ -96,7 +95,7 @@ class GormService extends DataSourceService {
                 dataSourcePrefix: dataSourcePrefix
         ]).writeTo(file.newWriter("utf-8"))
         file.deleteOnExit()
-        applicationContext = new FileSystemXmlApplicationContext(file.toURI().toURL().toString())
+        applicationContext = new MetridocFileSystemXmlApplicationContext(file.toURI().toURL().toString())
     }
 
     @Override

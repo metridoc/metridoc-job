@@ -23,6 +23,7 @@ import metridoc.core.services.ConfigService
 import metridoc.tool.gorm.User
 import metridoc.utils.DataSourceConfigUtil
 import org.springframework.context.ApplicationContext
+import spock.lang.IgnoreRest
 import spock.lang.Specification
 
 import javax.sql.DataSource
