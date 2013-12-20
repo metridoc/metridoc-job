@@ -13,16 +13,9 @@
  * 	permissions and limitations under the License.
  */
 
-
-
-
-
-
-
 package metridoc.tool.gorm
 
 import grails.persistence.Entity
-import metridoc.core.MetridocScript
 import metridoc.iterators.Record
 import metridoc.service.gorm.GormService
 import metridoc.writers.WriteResponse
