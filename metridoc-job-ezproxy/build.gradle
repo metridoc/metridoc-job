@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.codehaus.groovy:groovy-all:2.0.8',
+    compile 'org.codehaus.groovy:groovy-all:2.1.9',
         project(':metridoc-tool-gorm')
 
     testCompile 'org.spockframework:spock-core:0.7-groovy-2.0',

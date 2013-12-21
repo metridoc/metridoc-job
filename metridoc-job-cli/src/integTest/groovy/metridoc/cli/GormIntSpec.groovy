@@ -16,9 +16,6 @@
 
 
 package metridoc.cli
-
-import spock.lang.Specification
-
 /**
  * Created with IntelliJ IDEA on 9/7/13
  * @author Tommy Barker

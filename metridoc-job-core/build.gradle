@@ -8,7 +8,7 @@ dependencies {
         exclude module: 'slf4j-api'
     }
     compile('com.google.guava:guava:13.0.1')
-    compile('org.codehaus.groovy:groovy-all:2.0.8')
+    compile('org.codehaus.groovy:groovy-all:2.1.9')
     compile('org.apache.ivy:ivy:2.2.0')
     compile("mysql:mysql-connector-java:5.1.20")
     runtime('dom4j:dom4j:1.6.1') {

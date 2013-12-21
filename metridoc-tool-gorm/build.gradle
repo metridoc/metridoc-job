@@ -1,13 +1,14 @@
 project.ext.description = "Provides tool to use gorm in metridoc jobs and scripts"
 
-def grailsVersion = "2.2.4"
+def grailsVersion = "2.3.4"
 
 dependencies {
-    compile 'org.codehaus.groovy:groovy-all:2.0.8',
+    compile 'org.codehaus.groovy:groovy-all:2.1.9',
             "org.grails:grails-core:$grailsVersion",
             "org.grails:grails-spring:$grailsVersion",
             "org.grails:grails-web:$grailsVersion",
-            "org.grails:grails-plugin-datasource:$grailsVersion"
+            "org.grails:grails-plugin-datasource:$grailsVersion",
+            "javax.servlet:servlet-api:2.5"
 
     compile project(':metridoc-job-core')
 
@@ -15,9 +16,13 @@ dependencies {
         exclude module: "persistence-api"
     }
 
-    compile("org.grails:grails-hibernate:$grailsVersion") {
+    compile("org.grails:grails-datastore-gorm-hibernate:2.0.6.RELEASE") {
         exclude module: "persistence-api"
     }
+
+//    compile("org.grails.plugins:hibernate:3.6.10.6") {
+//        exclude module: "persistence-api"
+//    }
 }
 
 enableMaven { pom ->

@@ -23,26 +23,12 @@
                 http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
                 http://grails.org/schema/gorm http://grails.org/schema/gorm/gorm.xsd">
 
-    <bean id="pluginManager" class="org.codehaus.groovy.grails.plugins.GrailsPluginManagerFactoryBean">
-        <property name="grailsDescriptor" value="classpath:/grails.xml"/>
-        <property name="application" ref="grailsApplication"/>
-    </bean>
-
-    <bean id="grailsConfigurator" class="org.codehaus.groovy.grails.commons.spring.GrailsRuntimeConfigurator"
-          init-method="configure" depends-on="pluginManager">
-        <constructor-arg>
-            <ref bean="grailsApplication"/>
-        </constructor-arg>
-        <property name="pluginManager" ref="pluginManager"/>
-    </bean>
-
-    <bean id="grailsResourceLoader" class="org.codehaus.groovy.grails.commons.GrailsResourceLoaderFactoryBean"/>
-
     <bean id="eventTriggeringInterceptor"
           class="org.codehaus.groovy.grails.orm.hibernate.support.ClosureEventTriggeringInterceptor"/>
 
     <gorm:sessionFactory base-package="NA" data-source-ref="dataSource"
-                         message-source-ref="messageSource">
+                         message-source-ref="messageSource"
+                         >
         <property name="hibernateProperties">
             <util:map>
                 <gsp:scriptlet>hibernateProperties.each {key, value -></gsp:scriptlet>
