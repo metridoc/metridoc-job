@@ -14,7 +14,7 @@
 
 import foo.bar.Foo
 import grails.persistence.Entity
-import metridoc.tool.gorm.GormTool
+import metridoc.service.gorm.GormService
 import metridoc.core.services.ParseArgsService
 
 
@@ -23,7 +23,7 @@ new Foo()
 println "including parse service"
 includeService(ParseArgsService)
 println "including gorm service"
-includeService(GormTool).enableFor(Bar)
+includeService(GormService).enableFor(Bar)
 
 println "listing bar contents"
 Bar.list()

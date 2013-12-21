@@ -66,7 +66,7 @@ class MetridocMainSpec extends Specification {
         given:
         def args = ["--stacktrace", normalizePath("src/testJobs/simpleJob"), "--mergeMetridocConfig=false",
                 "--embeddedDataSource"]
-        def main = new MetridocMain(args: args)
+        def main = new MetridocMain(args: args, exitOnFailure: false)
 
         when:
         def result = main.run()

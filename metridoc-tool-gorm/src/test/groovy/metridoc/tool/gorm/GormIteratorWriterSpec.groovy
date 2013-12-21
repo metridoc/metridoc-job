@@ -53,9 +53,7 @@ class GormIteratorWriterSpec extends Specification {
         0 == response.aggregateStats[IGNORED]
         0 == response.aggregateStats[ERROR]
         0 == response.aggregateStats[INVALID]
-        GormHelper.withTransaction {
-            4 == GormHelper.list().size()
-        }
+        4 == GormHelper.list().size()
     }
 
     def "test validation errors"() {

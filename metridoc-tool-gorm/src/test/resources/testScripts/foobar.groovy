@@ -12,8 +12,8 @@
   *	or implied. See the License for the specific language governing
   *	permissions and limitations under the License.  */
 
+
 import grails.persistence.Entity
-import metridoc.core.services.ConfigService
 import metridoc.service.gorm.GormService
 
 args = ["--mergeMetridocConfig=false", "--embeddedDataSource"] as String[]
@@ -22,9 +22,10 @@ args = ["--mergeMetridocConfig=false", "--embeddedDataSource"] as String[]
  * @author Tommy Barker
  */
 
-includeService(ConfigService)
+configure()
 def gorm = includeService(GormService)
 gorm.enableFor(Foo)
+
 
 Foo.list()
 

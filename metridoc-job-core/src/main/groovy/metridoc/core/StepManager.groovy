@@ -123,7 +123,7 @@ class StepManager {
         String description = data[key]
         def closureToRun
 
-        if(dependsList) {
+        if (dependsList) {
             closureToRun = {
                 profile(description) {
                     if (dependsList instanceof String) {
@@ -365,8 +365,10 @@ class StepManager {
 
     protected void handlePropertyInjection(instance) {
         InjectArgBase injectArgBase = instance.getClass().getAnnotation(InjectArgBase)
-        instance.properties.each { String key, value ->
+        instance.metaClass.properties.each { MetaBeanProperty property ->
             InjectArg injectArg
+            def key = property.name
+
             try {
                 def field = getField(instance, key)
                 if (field) {
