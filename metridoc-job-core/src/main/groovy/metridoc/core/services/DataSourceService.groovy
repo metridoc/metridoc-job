@@ -17,6 +17,7 @@
 
 package metridoc.core.services
 
+import metridoc.utils.DataSourceConfigUtil
 import org.hibernate.Session
 import org.hibernate.SessionFactory
 
@@ -36,7 +37,7 @@ abstract class DataSourceService extends DefaultService {
 
     protected static dataSourceHash = [:]
 
-    static DataSource getDataSoruce(String dataSourceName) {
+    static DataSource getDataSource(String dataSourceName) {
         def trimmedName = dataSourceName.trim()
         assert dataSourceHash[trimmedName] : "dataSource [${trimmedName}] does not exist"
         dataSourceHash[trimmedName]
@@ -73,6 +74,8 @@ abstract class DataSourceService extends DefaultService {
             dataSource.driverClassName = "com.mysql.jdbc.Driver"
             dataSource.dialect = "org.hibernate.dialect.MySQL5InnoDBDialect"
         }
+
+        dataSourceHash[dataSourcePrefix] = DataSourceConfigUtil.getDataSource(config, dataSourcePrefix)
     }
 
     synchronized void enableFor(Class... entities) {
