@@ -2,6 +2,34 @@ project.ext.description = "Provides tool to use gorm in metridoc jobs and script
 
 def grailsVersion = "2.3.4"
 
+configurations {
+    all*.exclude group: "org.aspectj"
+    all*.exclude module: "oro"
+    all*.exclude module: "commons-logging"
+    all*.exclude module: "spring-expression"
+    all*.exclude group: "org.apache.ant"
+    all*.exclude group: "org.codehaus.gant"
+    all*.exclude group: "org.apache.ivy"
+    all*.exclude group: "xalan"
+    all*.exclude group: "taglibs"
+    all*.exclude group: "org.apache.tomcat.embed"
+    all*.exclude module: "jansi"
+    all*.exclude module: "commons-fileupload"
+    all*.exclude module: "spring-webmvc"
+    all*.exclude module: "jline"
+    all*.exclude module: "spring-aspects"
+    all*.exclude module: "aopalliance"
+    all*.exclude module: "jna"
+    all*.exclude module: "spring-web"
+    all*.exclude module: "grails-spring"
+    all*.exclude module: "xpp3_min"
+    all*.exclude module: "sitemesh"
+    all*.exclude module: "gpars"
+    all*.exclude module: "gson"
+    all*.exclude module: "grails-databinding"
+    all*.exclude module: "tomcat-jdbc"
+}
+
 dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.1.9',
             "org.grails:grails-core:$grailsVersion",
@@ -19,10 +47,6 @@ dependencies {
     compile("org.grails:grails-datastore-gorm-hibernate:2.0.6.RELEASE") {
         exclude module: "persistence-api"
     }
-
-//    compile("org.grails.plugins:hibernate:3.6.10.6") {
-//        exclude module: "persistence-api"
-//    }
 }
 
 enableMaven { pom ->
