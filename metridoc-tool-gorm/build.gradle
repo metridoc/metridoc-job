@@ -3,31 +3,36 @@ project.ext.description = "Provides tool to use gorm in metridoc jobs and script
 def grailsVersion = "2.3.4"
 
 configurations {
-    all*.exclude group: "org.aspectj"
-    all*.exclude module: "oro"
-    all*.exclude module: "commons-logging"
-    all*.exclude module: "spring-expression"
-    all*.exclude group: "org.apache.ant"
-    all*.exclude group: "org.codehaus.gant"
-    all*.exclude group: "org.apache.ivy"
-    all*.exclude group: "xalan"
-    all*.exclude group: "taglibs"
-    all*.exclude group: "org.apache.tomcat.embed"
-    all*.exclude module: "jansi"
-    all*.exclude module: "commons-fileupload"
-    all*.exclude module: "spring-webmvc"
-    all*.exclude module: "jline"
-    all*.exclude module: "spring-aspects"
-    all*.exclude module: "aopalliance"
-    all*.exclude module: "jna"
-    all*.exclude module: "spring-web"
-    all*.exclude module: "grails-spring"
-    all*.exclude module: "xpp3_min"
-    all*.exclude module: "sitemesh"
-    all*.exclude module: "gpars"
-    all*.exclude module: "gson"
-    all*.exclude module: "grails-databinding"
-    all*.exclude module: "tomcat-jdbc"
+    all*.exclude group: "org.aspectj", module: "aspectjweaver"
+    all*.exclude group: "org.aspectj", module: "aspectjrt"
+    all*.exclude group: "oro", module: "oro"
+    all*.exclude group: "javax.persistence", module: "persistence-api"
+    all*.exclude group: "commons-logging", module: "commons-logging"
+    all*.exclude group: "org.springframework", module: "spring-expression"
+    all*.exclude group: "org.apache.ant", module: "ant"
+    all*.exclude group: "org.apache.ant", module: "ant-launcher"
+    all*.exclude group: "org.apache.ant", module: "ant-trax"
+    all*.exclude group: "org.apache.ant", module: "ant-junit"
+    all*.exclude group: "org.codehaus.gant", module: "gant_groovy1.8"
+    all*.exclude group: "org.apache.ivy", module: "ivy"
+    all*.exclude group: "xalan", module: "serializer"
+    all*.exclude group: "taglibs", module: "standard"
+    all*.exclude group: "org.apache.tomcat.embed", module: "tomcat-embed-logging-log4j"
+    all*.exclude group: "org.fusesource.jansi", module: "jansi"
+    all*.exclude group: "commons-fileupload", module: "commons-fileupload"
+    all*.exclude group: "org.springframework", module: "spring-webmvc"
+    all*.exclude group: "jline", module: "jline"
+    all*.exclude group: "org.springframework", module: "spring-aspects"
+    all*.exclude group: "aopalliance", module: "aopalliance"
+    all*.exclude group: "net.java.dev.jna", module: "jna"
+    all*.exclude group: "org.springframework", module: "spring-web"
+    all*.exclude group: "org.grails", module: "grails-spring"
+    all*.exclude group: "xpp3", module: "xpp3_min"
+    all*.exclude group: "opensymphony", module: "sitemesh"
+    all*.exclude group: "org.codehaus.gpars", module: "gpars"
+    all*.exclude group: "com.google.code.gson", module: "gson"
+    all*.exclude group: "org.grails", module: "grails-databinding"
+    all*.exclude group: "org.apache.tomcat", module: "tomcat-jdbc"
 }
 
 dependencies {
@@ -36,32 +41,11 @@ dependencies {
             "org.grails:grails-spring:$grailsVersion",
             "org.grails:grails-web:$grailsVersion",
             "org.grails:grails-plugin-datasource:$grailsVersion",
-            "javax.servlet:servlet-api:2.5"
+            "javax.servlet:servlet-api:2.5",
+            "org.grails:grails-plugin-domain-class:$grailsVersion",
+            "org.grails:grails-datastore-gorm-hibernate:2.0.6.RELEASE"
 
     compile project(':metridoc-job-core')
-
-    compile("org.grails:grails-plugin-domain-class:$grailsVersion") {
-        exclude module: "persistence-api"
-    }
-
-    compile("org.grails:grails-datastore-gorm-hibernate:2.0.6.RELEASE") {
-        exclude module: "persistence-api"
-    }
 }
 
-enableMaven { pom ->
-
-    pom.whenConfigured { pomToConfigure ->
-        pomToConfigure.dependencies.each { dep ->
-            def classLoader = dep.getClass().classLoader
-            def Exclusion = classLoader.loadClass("org.apache.maven.model.Exclusion")
-            def exclusionToAdd = Exclusion.newInstance(
-                    artifactId: "persistence-api",
-                    groupId: "javax.persistence"
-            )
-
-
-            dep.exclusions.add(exclusionToAdd)
-        }
-    }
-}
+enableMaven{}
