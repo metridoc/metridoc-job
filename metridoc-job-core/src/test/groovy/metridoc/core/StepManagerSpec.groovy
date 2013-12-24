@@ -21,145 +21,190 @@ import metridoc.core.services.DefaultService
 import metridoc.core.services.HibernateService
 import metridoc.core.services.Service
 import org.junit.Test
+import spock.lang.Specification
 
-class StepManagerTest {
+class StepManagerSpec extends Specification {
 
     def stepManager = new StepManager()
 
-    @Test
     void "when a job is interrupted it should throw an exception"() {
+        when:
         stepManager.interrupt()
+        stepManager.profile("do something") {
 
-        try {
-            stepManager.profile("do something") {
+        }
 
-            }
-            assert false: "exception should have occurred"
-        }
-        catch (JobInterruptionException ignored) {
-        }
+        then:
+        thrown(JobInterruptionException)
     }
 
-    @Test
     void "test general functionality of including and using targets"() {
+        when:
         stepManager.includeSteps(MetridocJobTestTargetHelper)
         stepManager.defaultStep = "bar"
         stepManager.runDefaultStep()
-        assert stepManager.binding.fooRan
-        assert stepManager.binding.foobarRan
-        assert stepManager.stepsRan.contains("foo")
-        assert stepManager.stepsRan.contains("bar")
+
+        then:
+        stepManager.binding.fooRan
+        stepManager.binding.foobarRan
+        stepManager.stepsRan.contains("foo")
+        stepManager.stepsRan.contains("bar")
     }
 
-    @Test
     void "include tool returns the tool it instantiates or has already instantiated"() {
+        when:
         def tool = stepManager.includeService(HibernateService)
-        assert tool
-        assert tool instanceof HibernateService
-        assert tool == stepManager.includeService(HibernateService)
+
+        then:
+        tool
+        tool instanceof HibernateService
+        tool == stepManager.includeService(HibernateService)
     }
 
-    @Test
     void "test target manager interruption"() {
+        expect:
         assert !stepManager.interrupted
+
+        when:
         stepManager.interrupt()
-        assert stepManager.interrupted
-        assert stepManager.binding.interrupted
+
+        then:
+        stepManager.interrupted
+        stepManager.binding.interrupted
     }
 
-    @Test
     void "if the binding has an interrupted value set to true, then it is interrupted"() {
+        when:
         stepManager.binding.interrupted = true
-        assert stepManager.interrupted
+
+        then:
+        stepManager.interrupted
     }
 
-    @Test
     void "test property injection"() {
+        when:
         def binding = stepManager.binding
         binding.bar = "foo"
         binding.bam = "foo"
         binding.foobar = "55" //requires conversion
         binding.blammo = "55" //does not exist in service
         binding.something = "foobar" //wrong status
-
         stepManager.includeService(FooToolHelper)
         FooToolHelper helper = binding.fooToolHelper
-        assert "foo" == helper.bar
-        assert "foo" == helper.bam
-        assert 55 == helper.foobar
-        assert null == helper.something
+
+        then:
+        "foo" == helper.bar
+        "foo" == helper.bam
+        55 == helper.foobar
+        null == helper.something
     }
 
-    @Test
     void "injection uses getVariable if the class extends DefaultService"() {
+        when:
         def binding = stepManager.binding
         binding.config = new ConfigObject()
         binding.config.foo = "bar"
         def helper = stepManager.includeService(FooBarServiceHelper)
-        assert helper.foo == "bar"
+
+        then:
+        helper.foo == "bar"
     }
 
-    @Test
     void "property injection should override already set properties"() {
+        when:
         def binding = stepManager.binding
         binding.foo = "bam"
         def helper = new PropertyInjectionHelper()
         stepManager.handlePropertyInjection(helper)
-        assert "bam" == helper.foo
 
+        then:
+        "bam" == helper.foo
         //check that the current properties are maintained
-        assert "foo" == helper.bar
+        "foo" == helper.bar
     }
 
-    @Test
     void "fine grain injection can be controlled by InjectArg annotation"() {
+        when:
         def binding = stepManager.binding
         binding.config = new ConfigObject()
         binding.config.foo.bar = "fromConfig"
         binding.baz = "shouldNotInject"
         def helper = new PropertyInjectionHelper()
         stepManager.handlePropertyInjection(helper)
-        assert "fromConfig" == helper.fooBar
-        assert null == helper.baz
 
+        then:
+        "fromConfig" == helper.fooBar
+        null == helper.baz
+
+        when:
         binding.argsMap = [fooBaz: "bam"]
         stepManager.handlePropertyInjection(helper)
-        assert "bam" == helper.fooBar
 
+        then:
+        "bam" == helper.fooBar
+
+        when:
         helper = binding.includeService(PropertyInjectionHelper)
-        assert "bam" == helper.fooBar
+
+        then:
+        "bam" == helper.fooBar
     }
 
-    @Test
     void "test injection with a base"() {
+        when:
         def binding = stepManager.binding
         binding.config = new ConfigObject()
         binding.config.foo.bar = "bam"
         def helper = new PropertyInjectorHelperWithBase()
         stepManager.handlePropertyInjection(helper)
-        assert "bam" == helper.bar
+
+        then:
+        "bam" == helper.bar
     }
 
-    @Test
     void "target flag should also work in MetridocScript"() {
+        when:
         def binding = new Binding()
         binding.args = ["--target=foo"]
         def helper = new MetridocJobTestTargetHelperWithDefaultTarget()
         helper.binding = binding
         helper.run()
-        assert helper.fooRan
-        assert !helper.barRan
+
+        then:
+        helper.fooRan
+        !helper.barRan
     }
 
-    @Test
     void "includeService should perform injection on previously loaded services"() {
+        when:
         def foobar = stepManager.includeService(FooBar)
         def foo = stepManager.includeService(Foo)
         def bar = stepManager.includeService(Bar)
 
-        assert foo.bar == bar
-        assert bar.foo == foo
-        assert !foobar.foo
+        then:
+        foo.bar == bar
+        bar.foo == foo
+        !foobar.foo
+    }
+
+    void "when injecting args, lazy fields should not be activated"() {
+        when:
+        def fooLazy = new FooLazy()
+        new StepManager().handlePropertyInjection(fooLazy)
+
+        then:
+        !fooLazy.lazyCalled
+    }
+
+    class FooLazy {
+        boolean lazyCalled = false
+
+        @Lazy
+        String bar = {
+            lazyCalled = true
+            return "bar"
+        }()
+
     }
 
     class FooToolHelper implements Service {

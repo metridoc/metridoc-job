@@ -18,15 +18,13 @@
 
 package metridoc.service.gorm
 
+import grails.persistence.Entity
+import grails.validation.ValidationException
 import groovy.sql.Sql
 import metridoc.core.services.ConfigService
 import metridoc.tool.gorm.User
-import metridoc.utils.DataSourceConfigUtil
-import org.springframework.context.ApplicationContext
-import spock.lang.IgnoreRest
+import org.apache.commons.dbcp.BasicDataSource
 import spock.lang.Specification
-
-import javax.sql.DataSource
 
 /**
  * Created with IntelliJ IDEA on 8/1/13
@@ -35,9 +33,24 @@ import javax.sql.DataSource
 class GormServiceSpec extends Specification {
 
     def service = new GormService(embeddedDataSource: true)
+    Sql sql
 
     void setup() {
-        service.init()
+        sql = new Sql(service.dataSource)
+    }
+
+    void cleanup() {
+        dropTable("user")
+        dropTable("foo_with_date")
+    }
+
+    void dropTable(String tableName) {
+        try {
+            sql.execute("drop table if exists $tableName" as String)
+        }
+        catch (Throwable throwable) {
+            //do nothing
+        }
     }
 
     void "enableGorm should fail on more than one call"() {
@@ -57,17 +70,18 @@ class GormServiceSpec extends Specification {
     void "test basic gorm operations"() {
         setup:
         service.enableFor(User)
-        def sql = new Sql(service.applicationContext.getBean(DataSource))
+        def sql = new Sql(service.dataSource)
         def user = new User(name: "joe", age: 7)
 
         when:
-        User.withTransaction {
-            user.save(flush: true)
+        service.withTransaction {
+            assert user.save(failOnError: true)
         }
         def total = sql.firstRow("select count(*) as total from user").total
 
         then:
         noExceptionThrown()
+        User.list().size() == 1
         total == 1
     }
 
@@ -80,14 +94,13 @@ class GormServiceSpec extends Specification {
         configObject.dataSource.password = ""
         configObject.dataSource.url = "jdbc:h2:mem:devDbManual;MVCC=TRUE;LOCK_TIMEOUT=10000"
         service.enableFor(User)
-        def dataSource = service.applicationContext.getBean(DataSource)
+        def dataSource = service.dataSource
         def sql = new Sql(dataSource)
         def user = new User(name: "joe", age: 7)
 
         when:
-        User.withTransaction {
-            user.save(flush: true)
-            user.errors.fieldErrorCount
+        service.withTransaction {
+            user.save()
         }
         def total = sql.firstRow("select count(*) as total from user").total
 
@@ -107,32 +120,33 @@ class GormServiceSpec extends Specification {
     }
 
     void "everything should work as a script"() {
+
         given:
-        def scriptDir = new File("src/test/resources/testScripts")
+        def path = "src/test/resources/testScripts"
+        def scriptDir = new File(path)
+
+        if (!scriptDir.exists()) {
+            scriptDir = new File("metridoc-tool-gorm/$path")
+        }
+
         def scriptFile = new File("foobar.groovy", scriptDir)
         def shell = new GroovyShell()
-        def thread = Thread.currentThread()
-        def originalClassLoader = thread.contextClassLoader
-        thread.contextClassLoader = shell.classLoader
 
         when:
         shell.evaluate(scriptFile)
 
         then:
         noExceptionThrown()
-
-        cleanup:
-        thread.contextClassLoader = originalClassLoader
     }
 
     void "lets test invalid data"() {
         given: "empty user"
         def user = new User()
-        service.enableGormFor(User)
+        service.enableFor(User)
 
         when:
         def valid
-        User.withTransaction { valid = user.validate() }
+        service.withTransaction { valid = user.validate() }
 
         then:
         !valid
@@ -161,7 +175,12 @@ class GormServiceSpec extends Specification {
     void "the dataSource in the binding should be the same as the one in the binding"() {
         given:
         def binding = new Binding()
-        def dataSource = DataSourceConfigUtil.embeddedDataSource
+        def dataSource = new BasicDataSource(
+                username: "sa",
+                password: "",
+                url: "jdbc:h2:mem:checkForSame;MVCC=TRUE;LOCK_TIMEOUT=10000",
+                driverClassName: "org.h2.Driver"
+        )
         binding.dataSource = dataSource
 
         when:
@@ -170,19 +189,80 @@ class GormServiceSpec extends Specification {
 
         then: "the dataSources are the same"
         dataSource == gormService.applicationContext.getBean("dataSource")
+        dataSource.url == gormService.applicationContext.getBean("dataSource").url
     }
 
-    void "applicationContext shold not be injectable"() {
-        given:
-        def applicationContextMock = [:] as ApplicationContext
-        def binding = new Binding()
-        binding.applicationContext = applicationContextMock
-
+    void "test date generation"() {
         when:
-        def gormService = binding.includeService(GormService)
+        service.enableFor(FooWithDate)
+        Date now = new Date()
+        FooWithDate.withTransaction {
+            new FooWithDate(name: "foo").save(failOnError: true)
+            //let's embed something
+            FooWithDate.withTransaction {
+                new FooWithDate(name: "bar").save(failOnError: true)
+            }
+        }
 
         then:
-        !gormService.applicationContext
+        FooWithDate.first().dateCreated > now
+        2 == FooWithDate.count
+    }
+
+    void "test failure"() {
+        when:
+        service.enableFor(FooWithDate)
+        FooWithDate.withNewTransaction {
+            def fooWithData = new FooWithDate()
+            fooWithData.save(failOnError: true)
+        }
+
+        then:
+        def ex = thrown(ValidationException)
+        "nullable" == ex.errors.getFieldError("name").code
+    }
+
+    void "test transaction failures"() {
+        when: "saving in a new transaction within a transaction"
+        service.enableFor(FooWithDate)
+        service.withTransaction {
+            FooWithDate.withNewTransaction {
+                new FooWithDate(name: "bar").save()
+            }
+
+            throw new RuntimeException("forced failure")
+        }
+
+        then: "the save in the NEW transaction gets saved despite the error"
+        thrown(RuntimeException)
+        1 == FooWithDate.count
+
+        when: "an error happens in a transaction with a save"
+        service.withTransaction {
+            FooWithDate.list()*.delete()
+        }
+        service.withTransaction {
+            new FooWithDate(name: "baz").save()
+
+            throw new RuntimeException("forced failure")
+        }
+
+        then: "nothing is saved"
+        thrown(RuntimeException)
+        0 == FooWithDate.count
+    }
+
+    void "test uniqueness constraint" () {
+        when:
+        boolean valid
+        service.enableFor(FooWithDate)
+        service.withTransaction {
+            new FooWithDate(name: "foobar").save()
+            valid = new FooWithDate(name: "foobar").validate()
+        }
+
+        then:
+        !valid
     }
 }
 
@@ -193,4 +273,15 @@ class GormServiceScriptHelper extends Script {
         def gorm = includeService(embeddedDataSource: true, GormService)
         gorm.enableFor(User)
     }
+}
+
+@Entity
+class FooWithDate {
+
+    static constraints = {
+        name(unique: true)
+    }
+
+    String name
+    Date dateCreated
 }
