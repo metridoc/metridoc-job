@@ -159,6 +159,18 @@ class MetridocMain {
             LEVEL = Level.toLevel((options.logLevel as String).toUpperCase(), Level.ERROR)
         }
 
+        if(options.info) {
+            LEVEL = Level.INFO
+        }
+
+        if(options.debug) {
+            LEVEL = Level.DEBUG
+        }
+
+        if(options.quiet) {
+            LEVEL = Level.ERROR
+        }
+
         if (options.logLineExt) {
             EXTENDED_LOG = true
         }
@@ -274,6 +286,9 @@ class MetridocMain {
         cli.lib(args: 1, argName: "directory", "add a directory of jars to classpath")
         cli.jobPath(args:1, argName: "jobPath", "specify where jobs are stored")
         cli.plainText("disables ansi logging")
+        cli.info("sets all logging to [info] level")
+        cli.debug("sets all logging to [debug] level")
+        cli.quiet("sets all logging to [error] level")
         def options = cli.parse(args)
         if (options.lib) {
             libDirectories.add(options.lib)
