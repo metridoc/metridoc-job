@@ -3,6 +3,20 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.10'
 }
 
+buildscript {
+    repositories {
+        maven { url 'http://repo.springsource.org/plugins-release' }
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.1'
+        classpath("net.saliman:gradle-cobertura-plugin:2.2.1") {
+            exclude module: "cobertura"
+        }
+    }
+}
+
 def versionForSubProjects = new File(project.projectDir, "VERSION").text
 
 assert versionForSubProjects ==~ /^\d+\.\d+\.\d+(-SNAPSHOT)?$/ : "version [$versionForSubProjects] is not in x.x.x format"
@@ -86,6 +100,22 @@ subprojects {
     sourceCompatibility = "1.7"
     targetCompatibility = "1.7"
 
+    buildscript {
+        repositories {
+            maven { url 'http://repo.springsource.org/plugins-release' }
+            mavenCentral()
+        }
+
+        dependencies {
+            classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.1'
+            classpath("net.saliman:gradle-cobertura-plugin:2.2.1") {
+                exclude module: "cobertura"
+            }
+        }
+    }
+
+    apply plugin: 'cobertura'
+
     group = 'com.github.metridoc'
     version = versionForSubProjects
     project.ext {
@@ -107,9 +137,11 @@ subprojects {
         testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
         testCompile 'com.github.stefanbirkner:system-rules:1.3.1'
         testCompile("org.slf4j:slf4j-simple:${project.ext.slf4jVersion}")
+        testCompile("net.sourceforge.cobertura:cobertura:2.0.3") {
+            exclude group: "xerces"
+        }
+        testCompile("xerces:xercesImpl:2.11.0")
     }
-
-
 }
 
 project.task("bumpVersion") << {

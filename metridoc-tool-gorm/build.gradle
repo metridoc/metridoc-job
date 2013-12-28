@@ -5,7 +5,7 @@ def grailsVersion = "2.3.4"
 configurations {
     all*.exclude group: "org.aspectj", module: "aspectjweaver"
     all*.exclude group: "org.aspectj", module: "aspectjrt"
-    all*.exclude group: "oro", module: "oro"
+    compile.exclude group: "oro", module: "oro"
     all*.exclude group: "javax.persistence", module: "persistence-api"
     all*.exclude group: "commons-logging", module: "commons-logging"
     all*.exclude group: "org.springframework", module: "spring-expression"
