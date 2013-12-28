@@ -21,20 +21,6 @@ sourceSets {
     }
 }
 
-buildscript {
-    repositories {
-        maven { url 'http://repo.springsource.org/plugins-release' }
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.1'
-        classpath "net.saliman:gradle-cobertura-plugin:2.2.1"
-    }
-}
-
-apply plugin: 'cobertura'
-
 project.ext {
     bintrayRepo = "http://dl.bintray.com/upennlib/metridoc-distributions"
 }
@@ -187,3 +173,5 @@ task updateVersionFile << {
 
 compileGroovy.dependsOn "createDependencyFile"
 compileGroovy.dependsOn "updateVersionFile"
+codenarcTest.enabled = false
+codenarcIntegTest.enabled = false
