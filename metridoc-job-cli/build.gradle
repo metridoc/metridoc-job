@@ -173,3 +173,5 @@ task updateVersionFile << {
 
 compileGroovy.dependsOn "createDependencyFile"
 compileGroovy.dependsOn "updateVersionFile"
+codenarcTest.enabled = false
+codenarcIntegTest.enabled = false
