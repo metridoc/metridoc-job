@@ -23,6 +23,17 @@ assert versionForSubProjects ==~ /^\d+\.\d+\.\d+(-SNAPSHOT)?$/ : "version [$vers
 
 subprojects {
     apply plugin: 'groovy'
+    apply plugin: 'codenarc'
+    project.codenarc {
+        configFile = new File(project.rootDir, 'config/codenarc/rules.groovy')
+    }
+
+    gradle.taskGraph.whenReady {
+//        codenarcTest.enabled = false
+//        codenarcIntegTest.enabled = false
+    }
+
+    check.dependsOn("test")
     project.ext.archivesBaseName = project.name
     def mavenExclusions = ["metridoc-job-cli", "metridoc-job-ezproxy"]
     if(!mavenExclusions.contains(project.name)) {
@@ -115,6 +126,8 @@ subprojects {
     }
 
     apply plugin: 'cobertura'
+    apply plugin: 'codenarc'
+
 
     group = 'com.github.metridoc'
     version = versionForSubProjects
