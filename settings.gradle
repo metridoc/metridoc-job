@@ -1,3 +1,2 @@
 include 'metridoc-job-core', 'metridoc-tool-gorm', 'metridoc-job-cli', 'metridoc-job-ezproxy', 'metridoc-job-illiad',
-        'metridoc-job-bd'
-
+        'metridoc-job-funds'
