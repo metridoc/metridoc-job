@@ -1,7 +1,3 @@
-import metridoc.core.MetridocScript
-
-use(MetridocScript)  {
-    //do something
-}
+configure()
 
 println "hello from metridoc"
