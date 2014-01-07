@@ -98,7 +98,18 @@ class DataSourceConfigUtil {
     static DataSource getDataSource(ConfigObject config, String dataSourceName) {
         def dataSourceNameUsed = dataSourceName ?: DEFAULT_DATASOURCE
         def dataSourceProperties = getDataSourceProperties(config, dataSourceNameUsed)
-        new BasicDataSource(dataSourceProperties)
+        def dataSource = new BasicDataSource(dataSourceProperties)
+
+        addShutdownHook {
+            try {
+                dataSource.close()
+            }
+            catch (Exception e) {
+                //do nothing
+            }
+        }
+
+        return dataSource
     }
 
     static List getDataSourcesNames(ConfigObject configObject) {
@@ -126,23 +137,27 @@ class DataSourceConfigUtil {
     }
 
     static getEmbeddedDataSource() {
-        def dataSource = new BasicDataSource()
-        dataSource.username = "sa"
-        dataSource.password = ""
-        dataSource.url = "jdbc:h2:mem:devDb;MVCC=TRUE;LOCK_TIMEOUT=10000"
-        dataSource.driverClassName = "org.h2.Driver"
+        def config = new ConfigObject()
+        def dataSourceConfig = config.dataSource
 
-        return dataSource
+        dataSourceConfig.username = "sa"
+        dataSourceConfig.password = ""
+        dataSourceConfig.url = "jdbc:h2:mem:devDb;MVCC=TRUE;LOCK_TIMEOUT=10000"
+        dataSourceConfig.driverClassName = "org.h2.Driver"
+
+        return getDataSource(config)
     }
 
     static getLocalMysqlDataSource() {
-        def dataSource = new BasicDataSource()
-        dataSource.url = "jdbc:mysql://localhost:3306/test"
-        dataSource.username = "root"
-        dataSource.password = ""
-        dataSource.driverClassName = "com.mysql.jdbc.Driver"
+        def config = new ConfigObject()
+        def dataSourceConfig = config.dataSource
 
-        return dataSource
+        dataSourceConfig.url = "jdbc:mysql://localhost:3306/test"
+        dataSourceConfig.username = "root"
+        dataSourceConfig.password = ""
+        dataSourceConfig.driverClassName = "com.mysql.jdbc.Driver"
+
+        return getDataSource(config)
     }
 
     static Map getDataSourceProperties(ConfigObject config) {
