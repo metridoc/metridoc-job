@@ -7,6 +7,7 @@ import metridoc.bd.entities.BdInstitution
 import metridoc.bd.entities.BdMinShipDate
 import metridoc.bd.entities.BdPatronType
 import metridoc.bd.utils.BdUtils
+import metridoc.bd.utils.RelaisSql
 import metridoc.core.Step
 import metridoc.core.services.CamelService
 import metridoc.service.gorm.GormService
