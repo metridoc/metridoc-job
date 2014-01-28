@@ -44,6 +44,7 @@ abstract class EzproxyBase {
 
     static constraints = {
         ezproxyId(maxSize: 50)
+        urlHost(maxSize: 75)
     }
 
     static mapping = {
