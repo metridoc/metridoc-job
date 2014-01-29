@@ -52,7 +52,14 @@ class ImportJobsCommand implements Command {
                 String path = value.path
                 def url = value.url
                 File destination = getDestination(mdoc, url)
-                log.info "installing [$url] to [$destination]"
+                def message = "installing [$url] to [$destination.parent]"
+
+                if (path) {
+                    message += " with path [$path]"
+                }
+
+                log.info message
+
                 url.withInputStream { inputStream ->
                     BufferedOutputStream outputStream = destination.newOutputStream()
                     try {
