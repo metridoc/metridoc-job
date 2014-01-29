@@ -16,7 +16,7 @@ buildscript {
     }
 }
 
-def versionForSubProjects = new File(project.projectDir, "VERSION").text
+def versionForSubProjects = new File(project.projectDir, "VERSION").text.trim()
 
 assert versionForSubProjects ==~ /^\d+\.\d+\.\d+(-SNAPSHOT)?$/ : "version [$versionForSubProjects] is not in x.x.x format"
 
