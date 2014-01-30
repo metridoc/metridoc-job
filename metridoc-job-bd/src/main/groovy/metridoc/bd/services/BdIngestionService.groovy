@@ -8,11 +8,13 @@ import metridoc.bd.entities.BdMinShipDate
 import metridoc.bd.entities.BdPatronType
 import metridoc.bd.utils.BdUtils
 import metridoc.bd.utils.RelaisSql
+import metridoc.bd.utils.Validator
 import metridoc.core.Step
 import metridoc.core.services.CamelService
 import metridoc.service.gorm.GormService
 import org.apache.commons.lang.StringUtils
 
+import javax.sql.DataSource
 import java.sql.ResultSet
 
 /**
@@ -22,7 +24,20 @@ class BdIngestionService {
 
     GormService gormService
     CamelService camelService
+    DataSource dataSource
+    DataSource dataSource_from_relais_bd
+    String startDate = "2011-12-31"
     def bdRelaisSql = new RelaisSql()
+
+    @Lazy
+    Validator validator = {
+        new Validator(
+                startDate: startDate,
+                camelService: camelService,
+                dataSource: dataSource,
+                dataSource_from_relais_bd: dataSource_from_relais_bd
+        )
+    }()
 
     @Step(description = "create tables for Borrow Direct and EzBorrow")
     void createTables() {
@@ -43,7 +58,17 @@ class BdIngestionService {
         doSimpleBorrowDirectMigration(BdExceptionCode, "exception_code")
     }
 
-    @Step(description = "runs entire Borrow Direct and Ez Borrow workflow", depends = ["createTables", "loadLookupTables"])
+    @Step(description = "load bd_bibliography table")
+    void loadBdBibliography() {
+        validator.validateAndFixBdBibliography()
+    }
+
+    @Step(description = "runs entire Borrow Direct and Ez Borrow workflow",
+            depends = [
+                "createTables",
+                "loadLookupTables",
+                "loadBdBibliography"
+            ])
     void runWorkflow() {}
 
     private void doSimpleBorrowDirectMigration(Class entity, String uniqueColumn) {
