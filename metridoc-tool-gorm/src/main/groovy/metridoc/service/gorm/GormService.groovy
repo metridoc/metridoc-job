@@ -61,6 +61,7 @@ import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.support.DefaultTransactionDefinition
 import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionSynchronizationUtils
 import org.springframework.util.Assert
 
 import javax.sql.DataSource
@@ -71,6 +72,7 @@ import javax.sql.DataSource
 @Slf4j
 class GormService extends DataSourceService {
     List<Class> entities = []
+    private Set keys = [] as Set
 
     static {
         Iterators.WRITERS << ["gorm": GormIteratorWriter]
@@ -309,7 +311,11 @@ class GormService extends DataSourceService {
 
         def session = sessionFactory.openSession()
         def holder = new SessionHolder(session)
-        TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+        def key = TransactionSynchronizationUtils.unwrapResourceIfNecessary(sessionFactory)
+        if (!keys.contains(key)) {
+            TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+            keys.add(key)
+        }
 
         def transactionTemplate = new GrailsTransactionTemplate(transactionManager,
                 new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_REQUIRES_NEW))
