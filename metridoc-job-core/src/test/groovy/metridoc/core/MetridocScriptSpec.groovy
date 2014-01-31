@@ -25,6 +25,15 @@ class MetridocScriptSpec extends Specification {
 
     Script script = new MetridocScriptHelper()
 
+    void "when grabbing sql when it has not been configured, null is returned"() {
+        when:
+        def response = MetridocScript.getSql(new MetridocScriptHelper())
+
+        then:
+        noExceptionThrown()
+        response == null
+    }
+
     void "test initializing the targetManager"() {
         when:
         MetridocScript.initializeTargetManagerIfNotThere(script)
