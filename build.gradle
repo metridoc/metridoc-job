@@ -160,7 +160,7 @@ subprojects {
 
 project.task("bumpVersion") << {
     def versionFile = new File(project.projectDir, "VERSION")
-    String version = versionFile.text
+    String version = versionFile.text.trim()
     def m = version =~ /^(\d+\.\d+)\.(\d+)$/
     assert m.matches(): "version $version is not in the [0.0.0] format"
     String majorVersionText = m.group(1)

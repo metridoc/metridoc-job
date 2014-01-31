@@ -264,6 +264,14 @@ class GormServiceSpec extends Specification {
         then:
         !valid
     }
+
+    void "multiple newTransaction calls should not return IllegalStateException"() {
+        when:
+        new GormMultipleNewTransactionCallsHelper().run()
+
+        then:
+        noExceptionThrown()
+    }
 }
 
 class GormServiceScriptHelper extends Script {
@@ -272,6 +280,17 @@ class GormServiceScriptHelper extends Script {
     def run() {
         def gorm = includeService(embeddedDataSource: true, GormService)
         gorm.enableFor(User)
+    }
+}
+
+class GormMultipleNewTransactionCallsHelper extends Script {
+
+    def run() {
+        def gorm = includeService(embeddedDataSource: true, GormService)
+        gorm.enableFor(FooWithDate)
+
+        FooWithDate.withNewTransaction {}
+        FooWithDate.withNewTransaction {}
     }
 }
 
