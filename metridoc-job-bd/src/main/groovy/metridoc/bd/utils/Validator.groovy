@@ -17,6 +17,7 @@ class Validator {
     DataSource dataSource_from_relais_bd
     DataSource dataSource
     CamelService camelService
+    Sql sql
 
     def validateAndFixBdBibliography() {
         def specification = [
@@ -44,7 +45,7 @@ class Validator {
         if ( invalidGroup.size()>0 ) {
             invalidGroup.each {date ->
                 log.info "deleting any existing data for [$date]"
-                Sql.newInstance(dataSource).execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
+                sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
                 def sqlStmt = "select s.library_id as lender,r.library_id as borrower,r.request_number, " +
                         " abs(cast(HASHBYTES('md5',p.patron_id) as int)) as patron_id,p.patron_type,r.author, " +
@@ -53,6 +54,115 @@ class Validator {
                         "pl.pickup_location_desc as pickup_location,d.supplier_code_1 as supplier_code,h.call_number from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
                 camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
+                    log.info "syncing data for [$date]"
+                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                }
+            }
+        }
+    }
+
+    def validateAndFixBdCallNumber() {
+        def specification = [
+                filter: ">'2011-12-31'",
+                loadingGroup: "substr(process_date,1,10)",
+                loadingTable: "bd_call_number",
+                repository: dataSource,
+                sourceConnection: dataSource_from_relais_bd,
+                sourceFile: '',
+                sourceFilter: "h.call_number is not null and ",
+                sourceGroup: " replace(convert(varchar,d.date_processed,111),'/','-')",
+                sourceTables: "id_holdings h left outer join id_delivery d on h.request_number=d.request_number",
+                sourceType: "Database"
+        ]
+
+        ValidateDBload v = new ValidateDBload( specification )
+        v.validate()
+
+        def List invalidGroup = v.getInvalidData()
+
+        if ( invalidGroup.size()>0 ) {
+            invalidGroup.each {date ->
+
+                sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
+
+                def sqlStmt="select h.request_number, h.holdings_seq, h.supplier_code, h.call_number, d.date_processed as process_date from " +
+                        specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
+
+                log.info "deleted any existing data for [$date]"
+                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
+                    log.info "syncing data for [$date]"
+                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                }
+            }
+        }
+    }
+
+    def validateAndFixBdPrintDate() {
+        def specification = [
+                filter: ">'2011-12-31'",
+                loadingGroup: "substr(process_date,1,10)",
+                loadingTable: "bd_print_date",
+                repository: dataSource,
+                sourceConnection: dataSource_from_relais_bd,
+                sourceFile: '',
+                sourceFilter: "a.stat_location='8' and ",
+                sourceGroup: " replace(convert(varchar,d.date_processed,111),'/','-')",
+                sourceTables: "id_audit a left outer join id_delivery d on a.request_number=d.request_number" +
+                        " left outer join id_catalog_code c on catalog_code_desc=replace(a.note,'Printed At: ','')",
+                sourceType: "Database"
+        ]
+
+        ValidateDBload v = new ValidateDBload( specification )
+        v.validate()
+
+        def List invalidGroup = v.getInvalidData()
+
+        if ( invalidGroup.size()>0 ) {
+            invalidGroup.each {date ->
+                log.info "deleting any existing data for [$date]"
+                sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
+
+                def sqlStmt="select a.request_number, a.time_stamp as print_date, a.note, d.date_processed as process_date, c.catalog_library_id as library_id from " +
+                        specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
+
+                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
+                    log.info "syncing data for [$date]"
+                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                }
+            }
+        }
+
+        sql.execute("update bd_print_date p join bd_institution i on instr(p.note, i.institution) set p.library_id = i.library_id where p.library_id is null")
+    }
+
+    def validateAndFixBdShipDate() {
+        def specification = [
+                filter: ">'2011-12-31'",
+                loadingGroup: "substr(process_date,1,10)",
+                loadingTable: "bd_ship_date",
+                repository: dataSource,
+                sourceConnection: dataSource_from_relais_bd,
+                sourceFile: '',
+                sourceFilter: "a.exception_code<>'NULL' and ",
+                sourceGroup: " replace(convert(varchar,d.date_processed,111),'/','-')",
+                sourceTables: "id_audit a left outer join id_delivery d on a.request_number=d.request_number",
+                sourceType: "Database"
+        ]
+
+        ValidateDBload v = new ValidateDBload( specification )
+        v.validate()
+
+        def List invalidGroup = v.getInvalidData()
+
+        if ( invalidGroup.size()>0 ) {
+            invalidGroup.each {date ->
+                log.info "deleting any existing data for [$date]"
+                sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
+
+                def sqlStmt = "select a.request_number, a.time_stamp as ship_date, a.exception_code, d.date_processed as process_date from " +
+                        specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
+
+                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") { resultSet ->
                     log.info "syncing data for [$date]"
                     camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
                 }

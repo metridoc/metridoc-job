@@ -1,5 +1,7 @@
 package metridoc.bd.services
 
+import groovy.sql.Sql
+import groovy.util.logging.Slf4j
 import metridoc.bd.entities.BdBibliography
 import metridoc.bd.entities.BdCallNumber
 import metridoc.bd.entities.BdExceptionCode
@@ -20,11 +22,13 @@ import java.sql.ResultSet
 /**
  * Created by tbarker on 12/4/13.
  */
+@Slf4j
 class BdIngestionService {
 
     GormService gormService
     CamelService camelService
     DataSource dataSource
+    Sql sql
     DataSource dataSource_from_relais_bd
     String startDate = "2011-12-31"
     def bdRelaisSql = new RelaisSql()
@@ -35,7 +39,8 @@ class BdIngestionService {
                 startDate: startDate,
                 camelService: camelService,
                 dataSource: dataSource,
-                dataSource_from_relais_bd: dataSource_from_relais_bd
+                dataSource_from_relais_bd: dataSource_from_relais_bd,
+                sql: sql
         )
     }()
 
@@ -63,18 +68,51 @@ class BdIngestionService {
         validator.validateAndFixBdBibliography()
     }
 
+    @Step(description = "load bd_bcall_number table")
+    void loadBdCallNumber() {
+        validator.validateAndFixBdCallNumber()
+    }
+
+    @Step(description = "load bd_print_date table")
+    void loadPrintDate() {
+        validator.validateAndFixBdPrintDate()
+    }
+
+    @Step(description = "load bd_ship_date table")
+    void loadShipDate() {
+        validator.validateAndFixBdShipDate()
+    }
+
+    @Step(description = "load bd_min_ship_date table")
+    void loadMinShipDate() {
+        def query = """
+		    REPLACE INTO ezb_min_ship_date (request_number, min_ship_date)
+		    SELECT request_number, min(ship_date) as min_ship_date_shd
+		    FROM ezb_ship_date shd where shd.ship_date is not null group by shd.request_number
+	    """
+
+
+        log.info "Executing query: " + query
+        sql.execute(query);
+    }
+
+
+
     @Step(description = "runs entire Borrow Direct and Ez Borrow workflow",
             depends = [
                 "createTables",
                 "loadLookupTables",
-                "loadBdBibliography"
+                "loadBdBibliography",
+                "loadBdCallNumber",
+                "loadPrintDate",
+                "loadShipDate"
             ])
     void runWorkflow() {}
 
     private void doSimpleBorrowDirectMigration(Class entity, String uniqueColumn) {
         String unCapEntityName = StringUtils.uncapitalize(entity.simpleName)
         String fromSql = bdRelaisSql."${unCapEntityName}Sql"
-        camelService.consumeNoWait("sqlplus:${fromSql}?dataSource=dataSource_from_relais_bd") {ResultSet resultSet ->
+        camelService.consumeNoWait("sqlplus:${fromSql}?dataSource=dataSource_from_relais_bd") { ResultSet resultSet ->
             BdUtils.migrateData(resultSet, entity, uniqueColumn)
         }
     }
