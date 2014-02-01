@@ -13,6 +13,7 @@ abstract class BasePatronType {
     }
 
     static mapping = {
+        id name: "patronType"
         version(false)
     }
 }

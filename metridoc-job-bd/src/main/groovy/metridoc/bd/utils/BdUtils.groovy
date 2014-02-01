@@ -35,7 +35,9 @@ class BdUtils {
                     def convertedKeyName = getFieldNameForUnderscoredSeparatedName(key)
                     toInstance."$convertedKeyName" = value
                 }
-                toInstance.save(failOnError: true)
+                if (toInstance.isDirty()) {
+                    toInstance.save(failOnError: true)
+                }
             }
         }
     }
