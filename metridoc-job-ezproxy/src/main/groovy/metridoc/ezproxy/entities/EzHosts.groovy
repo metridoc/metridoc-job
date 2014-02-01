@@ -40,8 +40,8 @@ class EzHosts extends EzproxyBase {
 
     static constraints = {
         runBaseConstraints(delegate, it)
-        urlHost (unique: "ezproxyId")
-        patronId(nullable: true)
+        urlHost (unique: "ezproxyId", maxSize: 75)
+        patronId(nullable: true, maxSize: 85)
         ipAddress(nullable: true)
         department(nullable: true)
         rank(nullable: true)

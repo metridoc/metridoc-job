@@ -23,6 +23,10 @@ if [ $PROJECT_VERSION -ne $MDOC_VERSION ]; then
     exit 1
 fi
 
+#in case the version file MDOC_VERSION has not been pushed yet
+git add metridoc-job-cli/src/main/resources/MDOC_VERSION && git commit -m"commiting synced version of MDOC_VERSION" && git push origin master
+git add metridoc-job-cli/src/main/resources/DEPENDENCY_URLS && git commit -m"commiting DEPENDENCY_URLS" && git push origin master
+
 #releases to github
 echo ""
 echo "Releasing ${PROJECT_VERSION} to GitHub"

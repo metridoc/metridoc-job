@@ -19,6 +19,7 @@ package metridoc.cli
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.IgnoreRest
 
 /**
  * Created with IntelliJ IDEA on 8/15/13
@@ -189,5 +190,26 @@ class InstallJobCommandIntSpec extends AbstractFunctionalSpec {
         then:
         0 == exitCode
         noExceptionThrown()
+    }
+
+    void "test installing a zip file with a path directly"() {
+        setup:
+        File jobPath = temporaryFolder.newFolder("jobPath")
+        def path = "src/testJobs/complexJob.zip"
+        def complexJobPath = new File(path)
+        if (!complexJobPath.exists()) {
+            path = "metridoc-job-cli/${path}"
+        }
+
+        when:
+        int exitCode = runCommand(["--jobPath=${jobPath.canonicalPath}", "install", path, "metridoc-job-gorm"])
+
+        then:
+        0 == exitCode
+        noExceptionThrown()
+
+        1 == jobPath.listFiles().size()
+        jobPath.listFiles()[0].name == "metridoc-job-gorm"
+
     }
 }

@@ -24,7 +24,7 @@ sourceSets {
 project.ext {
     bintrayRepo = "http://dl.bintray.com/upennlib/metridoc-distributions"
 }
-String[] compileDeps = ['org.codehaus.groovy:groovy-all:2.0.8', 'org.apache.commons:commons-compress:1.5',
+String[] compileDeps = ['org.codehaus.groovy:groovy-all:2.1.9', 'org.apache.commons:commons-compress:1.5',
 'commons-cli:commons-cli:1.2', 'ch.qos.logback:logback-classic:1.0.13', 'org.fusesource.jansi:jansi:1.2.1',
         'commons-lang:commons-lang:2.6'] as String[]
 
@@ -50,9 +50,7 @@ dependencies {
         exclude module: 'dom4j'
     }
 
-    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
-
-    integTestCompile 'org.codehaus.groovy:groovy-all:2.0.8',
+    integTestCompile 'org.codehaus.groovy:groovy-all:2.1.9',
             "org.spockframework:spock-core:0.7-groovy-2.0"
 }
 

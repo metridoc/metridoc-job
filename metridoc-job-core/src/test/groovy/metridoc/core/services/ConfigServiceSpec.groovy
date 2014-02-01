@@ -168,7 +168,3 @@ class ConfigServiceSpec extends Specification {
 
     }
 }
-
-class Foo {
-    Sql sql
-}

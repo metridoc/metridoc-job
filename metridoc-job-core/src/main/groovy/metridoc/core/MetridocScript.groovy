@@ -311,7 +311,7 @@ class MetridocScript {
     }
 
     static Sql getSql(Script self) {
-        getSql(self)
+        getSql(self.binding)
     }
 
     static Sql getSql(Binding self) {

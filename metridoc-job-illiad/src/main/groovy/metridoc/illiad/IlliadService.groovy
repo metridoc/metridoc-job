@@ -89,7 +89,7 @@ class IlliadService extends RunnableTool {
 
         target(initializeDb: "initializing Gorm objects, db, etc.") {
             //this will ensure that we are using the same dataSource that gorm uses
-            dataSource = gormService.applicationContext.getBean(DataSource)
+            //dataSource = gormService.applicationContext.getBean(DataSource)
             dataSource_from_illiad = DataSourceConfigUtil.getDataSource(binding.config, "dataSource_from_illiad")
             fromIlliadSql = new Sql(dataSource_from_illiad)
         }
