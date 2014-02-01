@@ -8,10 +8,11 @@ abstract class BaseMinShipDate {
     Date minShipDate
 
     static constraints = {
-        requestNumber maxSize: 12, unique: true
+        requestNumber maxSize: 12
     }
 
     static mapping = {
+        id name: "requestNumber"
         version(false)
     }
 }
