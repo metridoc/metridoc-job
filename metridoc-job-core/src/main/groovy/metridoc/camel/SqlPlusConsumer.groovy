@@ -17,8 +17,10 @@
 package metridoc.camel
 
 import groovy.sql.Sql
+import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.impl.DefaultConsumer
+import org.apache.camel.spi.Synchronization
 
 import javax.sql.DataSource
 import java.sql.Connection
@@ -67,12 +69,13 @@ class SqlPlusConsumer extends DefaultConsumer {
         super.doStart()
         def sql = getSqlUnManaged()
         String command = getTableQuery()
+        def exchange = endpoint.createExchange()
         sql.query(command) {ResultSet resultSet ->
-            def exchange = endpoint.createExchange()
             exchange.in.setBody(resultSet)
-            def processor = getProcessor()
-            processor.process(exchange)
         }
+        def processor = getProcessor()
+        exchange.addOnCompletion(sql)
+        processor.process(exchange)
     }
 
     @Override
@@ -114,7 +117,7 @@ class SqlPlusConsumer extends DefaultConsumer {
     }
 }
 
-class SqlUnManagedResultSet extends Sql {
+class SqlUnManagedResultSet extends Sql implements Synchronization {
 
     Connection connection
     Statement statement
@@ -151,5 +154,25 @@ class SqlUnManagedResultSet extends Sql {
             super.closeResources(connection, statement)
         }
         super.close()
+    }
+
+    @Override
+    void onComplete(Exchange exchange) {
+        closeResource(results)
+        closeResource(statement)
+        closeResource(connection)
+    }
+
+    private void closeResource(resource) {
+        try {
+            resource.close()
+        } catch (Exception e) {
+
+        }
+    }
+
+    @Override
+    void onFailure(Exchange exchange) {
+
     }
 }

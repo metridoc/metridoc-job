@@ -27,11 +27,6 @@ subprojects {
         configFile = new File(project.rootDir, 'config/codenarc/rules.groovy')
     }
 
-    gradle.taskGraph.whenReady {
-//        codenarcTest.enabled = false
-//        codenarcIntegTest.enabled = false
-    }
-
     check.dependsOn("test")
     project.ext.archivesBaseName = project.name
     def mavenExclusions = ["metridoc-job-cli", "metridoc-job-ezproxy", "metridoc-job-funds", "metridoc-job-bd"]
@@ -153,6 +148,7 @@ subprojects {
         testCompile("org.slf4j:slf4j-simple:${project.ext.slf4jVersion}")
         testCompile("net.sourceforge.cobertura:cobertura:2.0.3") {
             exclude group: "xerces"
+            exclude group: "xml-apis"
         }
         testCompile("xerces:xercesImpl:2.11.0")
     }

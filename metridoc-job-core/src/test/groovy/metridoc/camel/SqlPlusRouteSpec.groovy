@@ -28,6 +28,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.Connection
 import java.sql.ResultSet
 
 /**
@@ -94,5 +95,16 @@ class SqlPlusRouteSpec extends Specification {
         then:
         noExceptionThrown()
         6 == sql.firstRow("select count(*) as total from BAR").total
+
+        when: "consume is called"
+        Connection connection
+        service.with {
+            consumeNoWait("sqletl:select * from Foo?dataSource=dataSource") {Exchange exchange ->
+                connection = exchange.in.getHeader("connection", Connection)
+            }
+        }
+
+        then: "the connection should be closed once finished"
+        connection.isClosed()
     }
 }

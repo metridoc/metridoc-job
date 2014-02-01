@@ -39,6 +39,8 @@ class SqlPlusPollingConsumer implements PollingConsumer {
         def resultSet = sql.executeQuery(query)
         def exchange = endpoint.createExchange()
         exchange.in.body = resultSet
+        exchange.in.setHeader("connection", sql.connection)
+        exchange.addOnCompletion(sql)
         return exchange
     }
 
