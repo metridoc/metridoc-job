@@ -13,7 +13,7 @@ abstract class BaseExceptionCode {
     }
 
     static mapping = {
-        id name: "exceptionCode"
+        id name: "exceptionCode", generator: "assigned"
         version defaultValue: '0'
     }
 }
