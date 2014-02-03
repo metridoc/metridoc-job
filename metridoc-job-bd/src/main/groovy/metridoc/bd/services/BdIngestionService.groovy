@@ -10,6 +10,7 @@ import metridoc.bd.entities.BdMinShipDate
 import metridoc.bd.entities.BdPatronType
 import metridoc.bd.entities.BdPrintDate
 import metridoc.bd.entities.BdShipDate
+import metridoc.bd.entities.EzbBibliography
 import metridoc.bd.entities.EzbCallNumber
 import metridoc.bd.entities.EzbExceptionCode
 import metridoc.bd.entities.EzbInstitution
@@ -66,6 +67,7 @@ class BdIngestionService {
                 BdPatronType,
                 BdPrintDate,
                 BdShipDate,
+                EzbBibliography,
                 EzbInstitution,
                 EzbPatronType,
                 EzbExceptionCode,
