@@ -50,7 +50,7 @@ class Validator {
 
                 def sqlStmt = "select s.library_id as lender,r.library_id as borrower,r.request_number, " +
                         " abs(cast(HASHBYTES('md5',p.patron_id) as int)) as patron_id,p.patron_type,r.author, " +
-                        "r.title,r.publisher,r.publication_place,r.publication_year,r.edition,r.isbn,r.isbn_2, " +
+                        "r.title,r.local_item_found,r.publisher,r.publication_place,r.publication_year,r.edition,r.isbn,r.isbn_2, " +
                         "r.bibliography_num as LCCN,system_number as oclc_text,r.date_entered as request_date,d.date_processed as process_date, " +
                         "pl.pickup_location_desc as pickup_location,d.supplier_code_1 as supplier_code,h.call_number from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"

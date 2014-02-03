@@ -8,11 +8,13 @@ import grails.persistence.Entity
 @Entity
 class BdBibliography extends BaseBibliography{
     String oclcText
+    String localItemFound
 
     static constraints = {
         def parentConstraint = BaseBibliography.constraints
         parentConstraint.delegate = delegate
         parentConstraint.call()
         oclcText(nullable: true, maxSize: 25)
+        localItemFound(nullable: true, maxSize: 1)
     }
 }
