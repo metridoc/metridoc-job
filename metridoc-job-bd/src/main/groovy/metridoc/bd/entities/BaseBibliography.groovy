@@ -27,8 +27,10 @@ abstract class BaseBibliography {
     String callNumber
     Date loadTime
     Integer oclc
+    String localItemFound
 
     static constraints = {
+        localItemFound(nullable: true, maxSize: 1)
         requestNumber(maxSize: 12, nullable: true, unique: true)
         patronId(maxSize: 20, nullable: true)
         patronType(maxSize: 1, nullable: true)
