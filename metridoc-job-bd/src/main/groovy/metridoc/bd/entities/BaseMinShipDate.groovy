@@ -12,7 +12,7 @@ abstract class BaseMinShipDate {
     }
 
     static mapping = {
-        id name: "requestNumber"
+        id name: "requestNumber", generator: "assigned"
         version(false)
     }
 }
