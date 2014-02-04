@@ -6,6 +6,7 @@ import metridoc.core.Step
 import metridoc.core.services.DefaultService
 import metridoc.funds.entities.FundsList
 import metridoc.funds.entities.FundsLoad
+import metridoc.funds.entities.Vendor
 import metridoc.service.gorm.GormService
 
 /**
@@ -24,12 +25,13 @@ class FundsService extends DefaultService {
         sql.execute("drop table funds_load")
     }
 
-    @Step(description = "runs the entire funds workflow", depends = ["createTables", "extractFunds", "createFundsList"])
+    @Step(description = "runs the entire funds workflow",
+            depends = ["createTables", "extractFunds", "createFundsList", "updateVendors"])
     void runFunds() {}
 
     @Step(description = "creates tables if they don't already exist")
     void createTables() {
-        includeService(GormService).enableFor(FundsList, FundsLoad)
+        includeService(GormService).enableFor(FundsList, FundsLoad, Vendor)
     }
 
     @Step(description = "delete data for ledger_id")
@@ -56,7 +58,7 @@ class FundsService extends DefaultService {
                 "bib_id, title, publisher, status, month, vendor, percent, quantity, po_no, allo_net, " +
                 "cost, commit_total, expend_total, available_bal, pending_expen, ledger_id, inv_line_item_id) values ("
         int rowNum = 0
-        sql_voyager.eachRow( query ) {
+        sql_voyager.eachRow(query) {
             row ->
                 if (row != null) {
                     def ins = row.repfund_id + ", '"
@@ -66,8 +68,8 @@ class FundsService extends DefaultService {
                     ins += row.sumfund_id + ", '"
                     ins += row.sumfund_name + "', "
                     ins += row.bib_id + ", '"
-                    ins += (row.title==null?'':row.title) + "', '"
-                    ins += (row.publisher==null?'':row.publisher) + "', '"
+                    ins += (row.title == null ? '' : row.title) + "', '"
+                    ins += (row.publisher == null ? '' : row.publisher) + "', '"
                     ins += row.status + "', '"
                     ins += row.month + "', '"
                     ins += row.vendor + "', "
@@ -84,10 +86,10 @@ class FundsService extends DefaultService {
                     ins += row.inv_line_item_id + ")"
 
                     def stmt = base + ins
-                    sql.execute( stmt )
+                    sql.execute(stmt)
                     rowNum++
                 }
-                if ( rowNum%10000==0 ) log.info "$rowNum rows loaded"
+                if (rowNum % 10000 == 0) log.info "$rowNum rows loaded"
         }
         log.info "Done for ledger $ledgerId"
     }
@@ -102,5 +104,21 @@ class FundsService extends DefaultService {
         """
         log.info "Executing query: " + query
         sql.execute(query);
+    }
+
+    @Step(description = "populates the vendor table", depends = ["createTables"])
+    void updateVendors() {
+        sql_voyager.eachRow("select vendor_code, vendor_name from vendor") { row ->
+            Vendor.withTransaction {
+                def vendor = Vendor.findByVendorCodeAndVendorName(row.vendor_code, row.vendor_name)
+                if (!vendor) {
+                    log.info "adding vendor with data [$row]"
+                    new Vendor(
+                            vendorCode: row.vendor_code,
+                            vendorName: row.vendor_name
+                    ).save(failOnError: true)
+                }
+            }
+        }
     }
 }
