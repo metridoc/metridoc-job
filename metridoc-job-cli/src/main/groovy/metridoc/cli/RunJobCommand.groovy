@@ -71,6 +71,10 @@ class RunJobCommand implements Command {
 
         if (file.isFile()) {
             metridocScript = file
+            def parentFile  = metridocScript.absoluteFile.parentFile
+            if (parentFile) {
+                addDirectoryResourcesToClassPath(this.class.classLoader as URLClassLoader, parentFile)
+            }
         }
         else if (file.isDirectory()) {
             log.info "checking if [$file.canonicalPath] has mdoc directory"

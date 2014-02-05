@@ -19,7 +19,6 @@ package metridoc.cli
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.IgnoreRest
 
 /**
  * Created with IntelliJ IDEA on 8/15/13
