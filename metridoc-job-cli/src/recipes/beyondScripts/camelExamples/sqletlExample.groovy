@@ -23,3 +23,17 @@ camelService.consume("sqletl://FOO?dataSource=fooBarDataSource") {resultSet ->
 }
 
 assert 3 == sql.firstRow("select count(*) as total from bar").total
+
+sql.execute("create table baz (baz int)")
+
+camelService.consume("sqletl://select foobar as baz from FOO?dataSource=fooBarDataSource") {resultSet ->
+	camelService.send("sqletl://BAZ?dataSource=fooBarDataSource", resultSet)
+}
+
+assert 3 == sql.firstRow("select count(*) as total from baz").total
+
+camelService.consume("sqletl://FOO?dataSource=fooBarDataSource") {resultSet ->
+	camelService.send("sqletl://insert into BAZ values (:foobar)?dataSource=fooBarDataSource", resultSet)
+}
+
+assert 6 == sql.firstRow("select count(*) as total from baz").total
