@@ -36,6 +36,3 @@ you can change this.  If the project name is `metridoc-job-foo`, you can name th
 would work exactly the same, `mdoc .` or `mdoc foo` if it is installed.
 
 
-####Accessing Your Job From Github
-
-
