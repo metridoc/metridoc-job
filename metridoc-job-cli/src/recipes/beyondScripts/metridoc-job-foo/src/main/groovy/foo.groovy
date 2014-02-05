@@ -3,4 +3,8 @@ import wslite.rest.*
 
 configure()
 
-println "hello from metridoc"
+println "hello from foo"
+
+includeService(bar.Bar)
+
+runStep("runBar")
