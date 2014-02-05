@@ -113,4 +113,12 @@ class RunJobCommandIntSpec extends AbstractFunctionalSpec {
         then:
         0 == exitCode
     }
+
+    void "test calling a root script directly with other files in classpath"() {
+        when:
+        int exitCode = runCommand(["-logLevel", "debug", "src/testJobs/complexJob/metridoc-job-gorm/src/main/groovy/metridoc.groovy", "-stacktrace"])
+
+        then:
+        0 == exitCode
+    }
 }
