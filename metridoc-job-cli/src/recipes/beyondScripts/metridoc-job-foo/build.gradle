@@ -1,0 +1,38 @@
+apply plugin: "groovy"
+
+repositories {
+    mavenCentral()
+    maven {
+        url "http://jcenter.bintray.com/"
+    }
+    maven {
+        url "http://dl.bintray.com/upennlib/metridoc"
+    }
+}
+
+sourceSets {
+    main {
+        groovy {
+            def sourceDirectories = ['src/main/groovy', 'src/main/resources']
+            File mdoc = project.file(".mdoc")
+            if(mdoc && mdoc.exists() && mdoc.isDirectory()) {
+                mdoc.eachDir {directory ->
+                    sourceDirectories.add new File(directory, "src/main/groovy").canonicalPath
+                    sourceDirectories.add new File(directory, "src/main/resources").canonicalPath
+                }
+            }
+            srcDirs = sourceDirectories
+        }
+    }
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.1.9',
+            'org.slf4j:slf4j-simple:1.7.5'
+    compile('com.github.metridoc:metridoc-tool-gorm:latest.integration')
+    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.7'
+}
