@@ -4,7 +4,7 @@ import metridoc.service.gorm.GormService
 import metridoc.utils.DataSourceConfigUtil
 
 /**
- * Created by tbarker on 2/6/14.
+ * mdoc https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/gorm/basicGormExample.groovy
  */
 dataSource = DataSourceConfigUtil.embeddedDataSource
 
