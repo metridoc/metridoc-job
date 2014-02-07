@@ -91,7 +91,7 @@ class IlliadService {
         }
     }
 
-    @Step(description = "migrates data", depends = ["initializeDb", "truncateLoadingTables"])
+    @Step(description = "migrates data", depends = ["truncateLoadingTables"])
     void migrateData() {
         log.info "migrating data to ${dataSource.connection.metaData.getURL()}"
 
