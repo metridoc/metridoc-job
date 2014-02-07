@@ -72,7 +72,6 @@ class IlliadService {
     ]
 
     @Step(description = "running full workflow", depends = [
-        "initializeDb",
         "truncateLoadingTables",
         "migrateData",
         "migrateBorrowingDataToIllTracking",
