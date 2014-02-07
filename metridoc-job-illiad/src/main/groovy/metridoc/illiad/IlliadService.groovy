@@ -42,6 +42,7 @@ class IlliadService {
 
     Sql sql
     DataSource dataSource
+    Sql sql_from_illiad
     CamelService camelService
 
     def fromIlliadSqlStatements = new IlliadMsSqlQueries()
@@ -215,7 +216,7 @@ class IlliadService {
 
     private tableExists(tableName) {
         try {
-            getFromIlliadSql().execute("select count(*) from $tableName" as String)
+            sql_from_illiad.execute("select count(*) from $tableName" as String)
             return true
         }
         catch (SQLException ignored) {
