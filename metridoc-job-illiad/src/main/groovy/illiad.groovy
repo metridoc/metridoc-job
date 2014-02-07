@@ -13,21 +13,18 @@
   *	permissions and limitations under the License.
   */
 
-import metridoc.core.services.ConfigService
-import metridoc.core.tools.ConfigTool
+
+import metridoc.core.services.CamelService
 import metridoc.illiad.DateUtil
 import metridoc.illiad.IlliadService
 import metridoc.illiad.entities.*
 import metridoc.service.gorm.GormService
-import metridoc.utils.DataSourceConfigUtil
 
-import javax.sql.DataSource
-
-//populate argsMap with cli info
-includeService(ConfigService)
+configure()
 
 def gormService = includeService(GormService)
-gormService.enableGormFor(
+includeTool(CamelService)
+gormService.enableFor(
         IllGroup,
         IllBorrowing,
         IllTracking,
@@ -43,37 +40,20 @@ gormService.enableGormFor(
         IllFiscalStartMonth
 )
 
-if (argsMap.containsKey("preview")) {
-    gormService.applicationContext.getBean("dataSource", DataSource).getConnection()
-    println "connected successfully to dataSource"
-    doPreview()
-    return
-}
-
 def month = "july"
 if (argsMap.containsKey("fiscalMonth")) {
     month = argsMap.fiscalMonth
     DateUtil.setMonth(month)
 }
 
-includeTool(IlliadService).execute()
+includeService(IlliadService)
+
+if(argsMap.params) {
+    runStep(argsMap.params[0])
+}
+else {
+    runStep("runFullWorkflow")
+}
+
 IllFiscalStartMonth.updateMonth(month)
 
-def doPreview() {
-    doConnect("dataSource_from_illiad")
-}
-
-def doConnect(String name) {
-    includeService(ConfigTool)
-    println config
-    def dataSource = DataSourceConfigUtil.getDataSource(config, name)
-
-    try {
-        dataSource.getConnection()
-        println "INFO - Connected successfully to $name"
-    }
-    catch (Throwable throwable) {
-        println "ERROR - Could not connect to [$name]"
-        throw throwable
-    }
-}

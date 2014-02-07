@@ -93,6 +93,13 @@ class IllTracking {
         illTracking.turnaround_req_rec = DateUtil.differenceByDays(receiveDate, requestDate)
         illTracking.turnaround_req_shp = DateUtil.differenceByDays(shipDate, requestDate)
         illTracking.turnaround_shp_rec = DateUtil.differenceByDays(receiveDate, shipDate)
+        def log = LoggerFactory.getLogger(IllTracking)
+        if (log.isDebugEnabled()) {
+            log.debug "blah"
+            log.debug(
+                    "for illTracking-${illTracking.id}, req_rec = ${illTracking.turnaround_req_rec}, req_shp = ${illTracking.turnaround_req_shp}, shp_rec = ${illTracking.turnaround_shp_rec}"
+            )
+        }
     }
 
     static updateFromIllBorrowing_AwaitingCopyrightClearance() {

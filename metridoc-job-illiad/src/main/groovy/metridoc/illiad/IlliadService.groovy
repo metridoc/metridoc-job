@@ -17,6 +17,8 @@ package metridoc.illiad
 
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
+import metridoc.core.Step
+import metridoc.core.services.CamelService
 import metridoc.core.tools.CamelTool
 import metridoc.core.tools.RunnableTool
 import metridoc.illiad.entities.IllGroup
@@ -36,13 +38,11 @@ import java.text.SimpleDateFormat
  * @author Tommy Barker
  */
 @Slf4j
-class IlliadService extends RunnableTool {
+class IlliadService {
 
     Sql sql
-    Sql fromIlliadSql
     DataSource dataSource
-    DataSource dataSource_from_illiad
-    GormService gormService
+    CamelService camelService
 
     def fromIlliadSqlStatements = new IlliadMsSqlQueries()
     def toIlliadSqlStatements = new IlliadMysqlQueries()
@@ -71,133 +71,116 @@ class IlliadService extends RunnableTool {
             "ill_tracking"
     ]
 
-    @Override
-    def configure() {
+    @Step(description = "running full workflow", depends = [
+        "initializeDb",
+        "truncateLoadingTables",
+        "migrateData",
+        "migrateBorrowingDataToIllTracking",
+        "doUpdateBorrowing",
+        "doUpdateLending",
+        "doIllGroupOtherInsert",
+        "cleanUpIllTransactionLendingLibraries",
+        "updateCache"
+    ])
+    void runFullWorkflow() {}
 
-        target(runFullWorkflow: "running full workflow") {
-            depends("initializeDb",
-                    "truncateLoadingTables",
-                    "migrateData",
-                    "migrateBorrowingDataToIllTracking",
-                    "doUpdateBorrowing",
-                    "doUpdateLending",
-                    "doIllGroupOtherInsert",
-                    "cleanUpIllTransactionLendingLibraries",
-                    "updateCache"
-            )
+    @Step(description = "truncating loading tables")
+    void truncateLoadingTables() {
+        illiadTables.each {
+            log.info "truncating table ${it} in the repository"
+            getSql().execute("truncate ${it}" as String)
         }
+    }
 
-        target(initializeDb: "initializing Gorm objects, db, etc.") {
-            //this will ensure that we are using the same dataSource that gorm uses
-            //dataSource = gormService.applicationContext.getBean(DataSource)
-            dataSource_from_illiad = DataSourceConfigUtil.getDataSource(binding.config, "dataSource_from_illiad")
-            fromIlliadSql = new Sql(dataSource_from_illiad)
-        }
+    @Step(description = "migrates data", depends = ["initializeDb", "truncateLoadingTables"])
+    void migrateData() {
+        log.info "migrating data to ${dataSource.connection.metaData.getURL()}"
 
-        target(truncateLoadingTables: "truncating loading tables") {
-            illiadTables.each {
-                log.info "truncating table ${it} in the repository"
-                getSql().execute("truncate ${it}" as String)
-            }
-        }
+        [
+                ill_group: fromIlliadSqlStatements.groupSqlStmt,
+                ill_lender_group: fromIlliadSqlStatements.groupLinkSqlStmt,
+                ill_lender_info: fromIlliadSqlStatements.lenderAddrSqlStmt(lenderTableName as String),
+                ill_reference_number: fromIlliadSqlStatements.referenceNumberSqlStmt,
+                ill_transaction: fromIlliadSqlStatements.transactionSqlStmt(getStartDate()),
+                ill_lending: fromIlliadSqlStatements.lendingSqlStmt(getStartDate()),
+                ill_borrowing: fromIlliadSqlStatements.borrowingSqlStmt(getStartDate()),
+                ill_user_info: fromIlliadSqlStatements.userSqlStmt(userTableName as String)
 
-        target(migrateData: "migrates data from illiad to repository instance") {
-            log.info "migrating data to ${dataSource.connection.metaData.getURL()}"
-            def camelTool = includeTool(CamelTool)
-            camelTool.bind("dataSource", dataSource)
-            camelTool.bind("dataSource_from_illiad", dataSource_from_illiad)
-
-            [
-                    ill_group: fromIlliadSqlStatements.groupSqlStmt,
-                    ill_lender_group: fromIlliadSqlStatements.groupLinkSqlStmt,
-                    ill_lender_info: fromIlliadSqlStatements.lenderAddrSqlStmt(lenderTableName as String),
-                    ill_reference_number: fromIlliadSqlStatements.referenceNumberSqlStmt,
-                    ill_transaction: fromIlliadSqlStatements.transactionSqlStmt(getStartDate()),
-                    ill_lending: fromIlliadSqlStatements.lendingSqlStmt(getStartDate()),
-                    ill_borrowing: fromIlliadSqlStatements.borrowingSqlStmt(getStartDate()),
-                    ill_user_info: fromIlliadSqlStatements.userSqlStmt(userTableName as String)
-
-            ].each { key, value ->
-                log.info("migrating to ${key} using \n    ${value}" as String)
-                camelTool.with {
-                    consumeNoWait("sqlplus:${value}?dataSource=dataSource_from_illiad") { ResultSet resultSet ->
-                        send("sqlplus:${key}?dataSource=dataSource", resultSet)
-                    }
+        ].each { key, value ->
+            log.info("migrating to ${key} using \n    ${value}" as String)
+            camelService.with {
+                consumeNoWait("sqlplus:${value}?dataSource=dataSource_from_illiad") { ResultSet resultSet ->
+                    send("sqlplus:${key}?dataSource=dataSource", resultSet)
                 }
             }
         }
-
-        target(migrateBorrowingDataToIllTracking: "migrates data from illborrowing to ill_tracking") {
-            depends("initializeDb")
-            IllTracking.updateFromIllBorrowing()
-        }
-
-        target(doUpdateBorrowing: "updates the borrowing tables") {
-            [
-                    fromIlliadSqlStatements.orderDateSqlStmt,
-                    fromIlliadSqlStatements.shipDateSqlStmt,
-                    fromIlliadSqlStatements.receiveDateSqlStmt,
-                    fromIlliadSqlStatements.articleReceiveDateSqlStmt
-            ].each {
-                log.info "update borrowing with sql statement $it"
-                getSql().execute(it as String)
-            }
-        }
-
-        target(doUpdateLending: "updates the lending table") {
-            [
-                    fromIlliadSqlStatements.arrivalDateSqlStmt,
-                    fromIlliadSqlStatements.completionSqlStmt,
-                    fromIlliadSqlStatements.shipSqlStmt,
-                    fromIlliadSqlStatements.cancelledSqlStmt
-            ].each {
-                log.info "updating lending with sql statement $it"
-                getSql().execute(it as String)
-            }
-        }
-
-        target(doIllGroupOtherInsert: "inserts extra records into ill_group to deal with 'OTHER'") {
-            IllGroup.withNewTransaction {
-                new IllGroup(groupNo: IlliadHelper.GROUP_ID_OTHER, groupName: OTHER).save(failOnError: true)
-                new IllLenderGroup(groupNo: IlliadHelper.GROUP_ID_OTHER, lenderCode: OTHER).save(failOnError: true)
-            }
-        }
-
-        target(cleanUpIllTransactionLendingLibraries: "cleans up data in ill_transaction, ill_lending_tracking and ill_tracking to facilitate agnostic sql queries in the dashboard") {
-
-            getSql().withTransaction {
-                int updates
-                updates = getSql().executeUpdate("update ill_transaction set lending_library = 'Other' where lending_library is null")
-                log.info "changing all lending_library entries in ill_transaction from null to other caused $updates updates"
-                updates = getSql().executeUpdate("update ill_transaction set lending_library = 'Other' where lending_library not in (select distinct lender_code from ill_lender_group)")
-                log.info "changing all lending_library entries in ill_transaction that are not in ill_lender_group to other caused $updates updates"
-            }
-
-            IllTracking.updateTurnAroundsForAllRecords()
-            IllLendingTracking.updateTurnAroundsForAllRecords()
-        }
-
-        target(updateCache: "updates reporting cache") {
-            depends("initializeDb")
-            illiadHelper.storeCache()
-        }
-
-        target(dropTables: "drops illiad tables") {
-            illiadTables.each {
-                getSql().execute("drop table $it" as String)
-            }
-        }
-
-        setDefaultTarget("runFullWorkflow")
     }
 
-    Sql getSql() {
-        if (sql) return sql
-        if (getDataSource()) {
-            sql = new Sql(dataSource as DataSource)
+    @Step(description = "migrates data from illborrowing to ill_tracking")
+    void migrateBorrowingDataToIllTracking() {
+        IllTracking.updateFromIllBorrowing()
+    }
+
+    @Step(description = "updates the borrowing tables")
+    void doUpdateBorrowing() {
+        [
+                fromIlliadSqlStatements.orderDateSqlStmt,
+                fromIlliadSqlStatements.shipDateSqlStmt,
+                fromIlliadSqlStatements.receiveDateSqlStmt,
+                fromIlliadSqlStatements.articleReceiveDateSqlStmt
+        ].each {
+            log.info "update borrowing with sql statement $it"
+            getSql().execute(it as String)
+        }
+    }
+
+    @Step(description = "updates the lending table")
+    void doUpdateLending() {
+        [
+                fromIlliadSqlStatements.arrivalDateSqlStmt,
+                fromIlliadSqlStatements.completionSqlStmt,
+                fromIlliadSqlStatements.shipSqlStmt,
+                fromIlliadSqlStatements.cancelledSqlStmt
+        ].each {
+            log.info "updating lending with sql statement $it"
+            getSql().execute(it as String)
+        }
+    }
+
+    @Step(description = "inserts extra records into ill_group to deal with 'OTHER'")
+    void doIllGroupOtherInsert() {
+        IllGroup.withNewTransaction {
+            new IllGroup(groupNo: IlliadHelper.GROUP_ID_OTHER, groupName: OTHER).save(failOnError: true)
+            new IllLenderGroup(groupNo: IlliadHelper.GROUP_ID_OTHER, lenderCode: OTHER).save(failOnError: true)
+        }
+    }
+
+    @Step(description = "cleans up data in ill_transaction, ill_lending_tracking and ill_tracking to facilitate agnostic sql queries in the dashboard")
+    void cleanUpIllTransactionLendingLibraries() {
+        sql.withTransaction {
+            int updates
+            updates = getSql().executeUpdate("update ill_transaction set lending_library = 'Other' where lending_library is null")
+            log.info "changing all lending_library entries in ill_transaction from null to other caused $updates updates"
+            updates = getSql().executeUpdate("update ill_transaction set lending_library = 'Other' where lending_library not in (select distinct lender_code from ill_lender_group)")
+            log.info "changing all lending_library entries in ill_transaction that are not in ill_lender_group to other caused $updates updates"
         }
 
-        return sql
+        println "calculating turnarounds for ill_tracking"
+        IllTracking.updateTurnAroundsForAllRecords()
+        println "calculating turnarounds for ill_lending_tracking"
+        IllLendingTracking.updateTurnAroundsForAllRecords()
+    }
+
+    @Step(description = "updates reporting cache")
+    void updateCache() {
+        illiadHelper.storeCache()
+    }
+
+    @Step(description = "drops illiad tables")
+    void dropTables() {
+        illiadTables.each {
+            sql.execute("drop table $it" as String)
+        }
     }
 
     def getLenderTableName() {
