@@ -9,7 +9,6 @@ import spock.lang.Specification
  */
 class IllTrackingSpec extends Specification {
 
-
     void "test calculating turnarounds"() {
         setup:
         new GormService(embeddedDataSource: true).enableFor(IllTracking)
@@ -35,6 +34,11 @@ class IllTrackingSpec extends Specification {
         illTracking.turnaround_req_rec > 0
         illTracking.turnaround_req_shp > 0
         illTracking.turnaround_shp_rec > 0
+
+        cleanup:
+        IllTracking.withTransaction {
+            IllTracking.list().each{it.delete()}
+        }
     }
 
     void "test calling directly from the step"() {
@@ -69,6 +73,10 @@ class IllTrackingSpec extends Specification {
         illTracking.turnaround_req_rec > 0
         illTracking.turnaround_req_shp > 0
         illTracking.turnaround_shp_rec > 0
-    }
 
+        cleanup:
+        IllTracking.withTransaction {
+            IllTracking.list().each{it.delete()}
+        }
+    }
 }
