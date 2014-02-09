@@ -77,7 +77,7 @@ class IllTracking {
     }
 
     static updateTurnAroundsForAllRecords() {
-        IllTracking.withNewTransaction {
+        IllTracking.withTransaction {
             IllTracking.list().each { IllTracking illTracking ->
                 updateTurnArounds(illTracking)
                 illTracking.save(failOnError: true)
@@ -95,7 +95,6 @@ class IllTracking {
         illTracking.turnaround_shp_rec = DateUtil.differenceByDays(receiveDate, shipDate)
         def log = LoggerFactory.getLogger(IllTracking)
         if (log.isDebugEnabled()) {
-            log.debug "blah"
             log.debug(
                     "for illTracking-${illTracking.id}, req_rec = ${illTracking.turnaround_req_rec}, req_shp = ${illTracking.turnaround_req_shp}, shp_rec = ${illTracking.turnaround_shp_rec}"
             )
@@ -133,7 +132,7 @@ class IllTracking {
     }
 
     private static processBatch(List<IllTracking> illTrackingList) {
-        IllTracking.withNewTransaction {
+        IllTracking.withTransaction {
             illTrackingList*.save(failOnError: true)
         }
         illTrackingList.clear()

@@ -80,6 +80,8 @@ class IlliadService {
         "doUpdateLending",
         "doIllGroupOtherInsert",
         "cleanUpIllTransactionLendingLibraries",
+        "calculateTurnAroundsForIllTracking",
+        "calculateTurnAroundsForIllLendingTracking",
         "updateCache"
     ])
     void runFullWorkflow() {}
@@ -149,10 +151,21 @@ class IlliadService {
 
     @Step(description = "inserts extra records into ill_group to deal with 'OTHER'")
     void doIllGroupOtherInsert() {
-        IllGroup.withNewTransaction {
+        IllGroup.withTransaction {
             new IllGroup(groupNo: IlliadHelper.GROUP_ID_OTHER, groupName: OTHER).save(failOnError: true)
             new IllLenderGroup(groupNo: IlliadHelper.GROUP_ID_OTHER, lenderCode: OTHER).save(failOnError: true)
         }
+    }
+
+    @Step(description = "calculates turnarounds for ill_tracking")
+    void calculateTurnAroundsForIllTracking() {
+        IllTracking.updateTurnAroundsForAllRecords()
+    }
+
+    @Step(description = "calculates turnarounds for ill_lending_tracking")
+    void calculateTurnAroundsForIllLendingTracking() {
+        println "calculating turnarounds for ill_lending_tracking"
+        IllLendingTracking.updateTurnAroundsForAllRecords()
     }
 
     @Step(description = "cleans up data in ill_transaction, ill_lending_tracking and ill_tracking to facilitate agnostic sql queries in the dashboard")
@@ -164,11 +177,6 @@ class IlliadService {
             updates = getSql().executeUpdate("update ill_transaction set lending_library = 'Other' where lending_library not in (select distinct lender_code from ill_lender_group)")
             log.info "changing all lending_library entries in ill_transaction that are not in ill_lender_group to other caused $updates updates"
         }
-
-        println "calculating turnarounds for ill_tracking"
-        IllTracking.updateTurnAroundsForAllRecords()
-        println "calculating turnarounds for ill_lending_tracking"
-        IllLendingTracking.updateTurnAroundsForAllRecords()
     }
 
     @Step(description = "updates reporting cache")

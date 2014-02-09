@@ -44,7 +44,7 @@ class IllLendingTracking {
     }
 
     static void updateTurnAroundsForAllRecords() {
-        IllLendingTracking.withNewTransaction {
+        IllLendingTracking.withTransaction {
             IllLendingTracking.list().each { IllLendingTracking illLendingTracking ->
                 illLendingTracking.turnaround = DateUtil.differenceByDays(illLendingTracking.completionDate, illLendingTracking.arrivalDate)
             }

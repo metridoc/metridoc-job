@@ -36,7 +36,7 @@ class IllCache {
     }
 
     static void update(String jsonData) {
-        withNewTransaction {
+        IllCache.withTransaction {
             if (count()) {
                 def illCache = list().get(0)
                 illCache.jsonData = jsonData
