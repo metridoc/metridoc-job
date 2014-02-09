@@ -206,7 +206,21 @@ class GormServiceSpec extends Specification {
 
         then:
         FooWithDate.first().dateCreated > now
+        FooWithDate.first().lastUpdated > now
         2 == FooWithDate.count
+
+        when:
+        def before = FooWithDate.findByName("bar").lastUpdated
+        FooWithDate.withTransaction {
+            def first = FooWithDate.findByName("bar")
+            first.name = "baz"
+            first.save(failOnError: true)
+        }
+
+        then:
+        noExceptionThrown()
+        before < FooWithDate.findByName("baz").lastUpdated
+        !FooWithDate.findByName("bar")
     }
 
     void "test failure"() {
@@ -303,4 +317,5 @@ class FooWithDate {
 
     String name
     Date dateCreated
+    Date lastUpdated
 }
