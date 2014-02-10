@@ -42,6 +42,7 @@ class GormServiceSpec extends Specification {
     void cleanup() {
         dropTable("user")
         dropTable("foo_with_date")
+        dropTable("bar")
     }
 
     void dropTable(String tableName) {
@@ -286,6 +287,22 @@ class GormServiceSpec extends Specification {
         then:
         noExceptionThrown()
     }
+
+    void "test multiple transactions from different entities"() {
+        service.enableFor(FooWithDate, Bar)
+        when:
+        Bar.withTransaction {
+            new Bar(name: "bam").save(failOnError: true)
+        }
+
+        FooWithDate.withTransaction {
+            new FooWithDate(name: "foobar").save(failOnError: true)
+        }
+
+        then:
+        1 == FooWithDate.list().size()
+        1 == Bar.list().size()
+    }
 }
 
 class GormServiceScriptHelper extends Script {
@@ -318,4 +335,9 @@ class FooWithDate {
     String name
     Date dateCreated
     Date lastUpdated
+}
+
+@Entity
+class Bar {
+    String name
 }

@@ -31,6 +31,7 @@ class IllTrackingSpec extends Specification {
         def illTracking = IllTracking.first()
 
         then:
+        illTracking.turnaroundsProcessed
         illTracking.turnaround_req_rec > 0
         illTracking.turnaround_req_shp > 0
         illTracking.turnaround_shp_rec > 0

@@ -36,6 +36,7 @@ class IllTracking {
     Double turnaround_shp_rec
     Double turnaround_req_shp
     Double turnaround_req_rec
+    boolean turnaroundsProcessed
 
     static constraints = {
         transactionNumber(unique: true)
@@ -52,6 +53,7 @@ class IllTracking {
         version(defaultValue: '0')
         orderDate(index: "idx_ill_tracking_order_date")
         shipDate(index: "idx_ill_tracking_ship_date")
+        turnaroundsProcessed(index: "idx_ill_tracking_turn", defaultValue: '0')
     }
 
     static updateFromIllBorrowing() {
@@ -77,11 +79,25 @@ class IllTracking {
     }
 
     static updateTurnAroundsForAllRecords() {
-        IllTracking.withTransaction {
-            IllTracking.list().each { IllTracking illTracking ->
-                updateTurnArounds(illTracking)
-                illTracking.save(failOnError: true)
+        boolean notDone = true
+        int count = 0
+        while (notDone) {
+            def illTrackingList = IllTracking.findAllByTurnaroundsProcessed(false, [max: 10000])
+
+            if (illTrackingList) {
+                IllTracking.withTransaction {
+                    illTrackingList.each { IllTracking illTracking ->
+                        count++
+                        illTracking.attach()
+                        updateTurnArounds(illTracking)
+                        illTracking.save(failOnError: true)
+                    }
+                }
             }
+            else {
+                notDone = false
+            }
+            LoggerFactory.getLogger(IllTracking).info "processed [$count] records"
         }
     }
 
@@ -93,6 +109,7 @@ class IllTracking {
         illTracking.turnaround_req_rec = DateUtil.differenceByDays(receiveDate, requestDate)
         illTracking.turnaround_req_shp = DateUtil.differenceByDays(shipDate, requestDate)
         illTracking.turnaround_shp_rec = DateUtil.differenceByDays(receiveDate, shipDate)
+        illTracking.turnaroundsProcessed = true
         def log = LoggerFactory.getLogger(IllTracking)
         if (log.isDebugEnabled()) {
             log.debug(
