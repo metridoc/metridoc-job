@@ -1,5 +1,6 @@
 package metridoc.illiad.entities
 
+import groovy.sql.Sql
 import metridoc.illiad.IlliadService
 import metridoc.service.gorm.GormService
 import spock.lang.Specification
@@ -32,6 +33,7 @@ class IllTrackingSpec extends Specification {
 
         then:
         illTracking.turnaroundsProcessed
+        illTracking.receiveDate
         illTracking.turnaround_req_rec > 0
         illTracking.turnaround_req_shp > 0
         illTracking.turnaround_shp_rec > 0
@@ -79,5 +81,73 @@ class IllTrackingSpec extends Specification {
         IllTracking.withTransaction {
             IllTracking.list().each{it.delete()}
         }
+    }
+
+    void "test full ill_tracking ingestion"() {
+        given:
+        def service = new GormService(embeddedDataSource: true)
+        service.enableFor(IllTracking, IllBorrowing)
+        def sql = new Sql(service.dataSource)
+
+        IllTracking.withTransaction {
+            new IllBorrowing(
+                    transactionNumber: 1L,
+                    requestType: "Loan",
+                    transactionStatus: IllBorrowing.AWAITING_COPYRIGHT_CLEARANCE,
+                    transactionDate: new Date()
+            ).save(failOnError: true)
+            new IllBorrowing(
+                    transactionNumber: 1L,
+                    requestType: "Loan",
+                    transactionStatus: IllBorrowing.REQUEST_SENT,
+                    transactionDate: new Date() - 3
+            ).save(failOnError: true)
+            new IllBorrowing(
+                    transactionNumber: 1L,
+                    requestType: "Loan",
+                    transactionStatus: IllBorrowing.SHIPPED,
+                    transactionDate: new Date() - 2
+            ).save(failOnError: true)
+            new IllBorrowing(
+                    transactionNumber: 1L,
+                    requestType: "Loan",
+                    transactionStatus: IllBorrowing.AWAITING_REQUEST_POST_PROCESSING,
+                    transactionDate: new Date() - 1
+            ).save(failOnError: true)
+            new IllBorrowing(
+                    transactionNumber: 2L,
+                    requestType: "Loan",
+                    transactionStatus: IllBorrowing.AWAITING_REQUEST_PROCESSING,
+                    transactionDate: new Date()
+            ).save(failOnError: true)
+            new IllTransaction(
+
+            )
+        }
+
+        when:
+        new Script(){
+            @Override
+            Object run() {
+                includeService(sql: sql, IlliadService)
+                runStep("migrateBorrowingDataToIllTracking")
+                runStep("doUpdateBorrowing")
+                runStep("calculateTurnAroundsForIllTracking")
+            }
+        }.run()
+
+        then:
+        2 == IllTracking.list().size()
+        IllTracking illTracking
+        IllTracking.withNewSession {
+            illTracking = IllTracking.get(1L)
+        }
+        illTracking.orderDate
+        illTracking.receiveDate
+        illTracking.shipDate
+        illTracking.turnaroundsProcessed
+        illTracking.turnaround_req_rec
+        illTracking.turnaround_req_shp
+        illTracking.turnaround_shp_rec
     }
 }

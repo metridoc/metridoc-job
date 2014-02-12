@@ -25,8 +25,10 @@ import grails.persistence.Entity
 class IllBorrowing {
 
     public static final String AWAITING_REQUEST_PROCESSING = "Awaiting Request Processing"
+    public static final String AWAITING_REQUEST_POST_PROCESSING = "Awaiting Post Receipt Processing"
     public static final String AWAITING_COPYRIGHT_CLEARANCE = "Awaiting Copyright Clearance"
     public static final String REQUEST_SENT = "Request Sent"
+    public static final String SHIPPED = "Shipped"
     Long transactionNumber
     String requestType
     String transactionStatus

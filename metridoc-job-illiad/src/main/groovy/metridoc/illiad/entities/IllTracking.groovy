@@ -82,21 +82,23 @@ class IllTracking {
         boolean notDone = true
         int count = 0
         while (notDone) {
-            def illTrackingList = IllTracking.findAllByTurnaroundsProcessed(false, [max: 10000])
-
-            if (illTrackingList) {
-                IllTracking.withTransaction {
-                    illTrackingList.each { IllTracking illTracking ->
-                        count++
-                        illTracking.attach()
-                        updateTurnArounds(illTracking)
-                        illTracking.save(failOnError: true)
+            def illTrackingList
+            IllTracking.withNewSession {
+                illTrackingList = IllTracking.findAllByTurnaroundsProcessed(false, [max: 10000])
+                if (illTrackingList) {
+                    IllTracking.withTransaction {
+                        illTrackingList.each { IllTracking illTracking ->
+                            count++
+                            updateTurnArounds(illTracking)
+                            illTracking.save(failOnError: true)
+                        }
                     }
                 }
+                else {
+                    notDone = false
+                }
             }
-            else {
-                notDone = false
-            }
+
             LoggerFactory.getLogger(IllTracking).info "processed [$count] records"
         }
     }
