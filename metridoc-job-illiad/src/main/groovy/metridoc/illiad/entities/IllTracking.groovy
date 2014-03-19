@@ -17,6 +17,7 @@ package metridoc.illiad.entities
 
 import grails.persistence.Entity
 import metridoc.illiad.DateUtil
+import org.hibernate.Session
 import org.slf4j.LoggerFactory
 
 /**
@@ -93,8 +94,8 @@ class IllTracking {
                             illTracking.save(failOnError: true)
                         }
                     }
-                }
-                else {
+
+                } else {
                     notDone = false
                 }
             }
