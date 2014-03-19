@@ -3,6 +3,8 @@ package metridoc.illiad.entities
 import groovy.sql.Sql
 import metridoc.illiad.IlliadService
 import metridoc.service.gorm.GormService
+import org.hibernate.SessionFactory
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 /**
@@ -40,37 +42,37 @@ class IllTrackingSpec extends Specification {
 
         cleanup:
         IllTracking.withTransaction {
-            IllTracking.list().each{it.delete()}
+            IllTracking.list().each { it.delete() }
         }
     }
 
     void "test calling directly from the step"() {
         when:
-            new Script(){
+        new Script() {
 
-                @Override
-                Object run() {
-                    includeService(embeddedDataSource: true,  GormService).enableFor(IllTracking)
-                    def now = new Date()
+            @Override
+            Object run() {
+                includeService(embeddedDataSource: true, GormService).enableFor(IllTracking)
+                def now = new Date()
 
-                    IllTracking.withTransaction {
-                        new IllTracking(
-                                receiveDate: now,
-                                requestDate: now - 2,
-                                shipDate: now - 1,
-                                transactionNumber: 1L,
-                                processType: 'Borrowing',
-                                requestType: 'Loan'
+                IllTracking.withTransaction {
+                    new IllTracking(
+                            receiveDate: now,
+                            requestDate: now - 2,
+                            shipDate: now - 1,
+                            transactionNumber: 1L,
+                            processType: 'Borrowing',
+                            requestType: 'Loan'
 
-                        ).save(failOnError: true)
-                    }
-
-                    includeService(IlliadService)
-
-                    runStep("calculateTurnAroundsForIllTracking")
+                    ).save(failOnError: true)
                 }
-            }.run()
-            def illTracking = IllTracking.first()
+
+                includeService(IlliadService)
+
+                runStep("calculateTurnAroundsForIllTracking")
+            }
+        }.run()
+        def illTracking = IllTracking.first()
 
         then:
         illTracking.turnaround_req_rec > 0
@@ -79,7 +81,7 @@ class IllTrackingSpec extends Specification {
 
         cleanup:
         IllTracking.withTransaction {
-            IllTracking.list().each{it.delete()}
+            IllTracking.list().each { it.delete() }
         }
     }
 
@@ -88,6 +90,7 @@ class IllTrackingSpec extends Specification {
         def service = new GormService(embeddedDataSource: true)
         service.enableFor(IllTracking, IllBorrowing)
         def sql = new Sql(service.dataSource)
+        def session = service.sessionFactory.getCurrentSession()
 
         IllTracking.withTransaction {
             new IllBorrowing(
@@ -114,34 +117,27 @@ class IllTrackingSpec extends Specification {
                     transactionStatus: IllBorrowing.AWAITING_REQUEST_POST_PROCESSING,
                     transactionDate: new Date() - 1
             ).save(failOnError: true)
-            new IllBorrowing(
-                    transactionNumber: 2L,
-                    requestType: "Loan",
-                    transactionStatus: IllBorrowing.AWAITING_REQUEST_PROCESSING,
-                    transactionDate: new Date()
-            ).save(failOnError: true)
-            new IllTransaction(
 
-            )
         }
 
         when:
-        new Script(){
+        new Script() {
             @Override
             Object run() {
+                gormService = service
                 includeService(sql: sql, IlliadService)
                 runStep("migrateBorrowingDataToIllTracking")
                 runStep("doUpdateBorrowing")
                 runStep("calculateTurnAroundsForIllTracking")
             }
         }.run()
-
-        then:
-        2 == IllTracking.list().size()
         IllTracking illTracking
         IllTracking.withNewSession {
-            illTracking = IllTracking.get(1L)
+            illTracking = IllTracking.findByTransactionNumber(1L)
         }
+
+        then:
+        illTracking
         illTracking.orderDate
         illTracking.receiveDate
         illTracking.shipDate
