@@ -102,6 +102,18 @@ class IllTrackingSpec extends Specification {
             new IllBorrowing(
                     transactionNumber: 1L,
                     requestType: "Loan",
+                    transactionStatus: IllBorrowing.AWAITING_REQUEST_PROCESSING,
+                    transactionDate: new Date()
+            ).save(failOnError: true)
+            new IllBorrowing(
+                    transactionNumber: 2L,
+                    requestType: "Loan",
+                    transactionStatus: IllBorrowing.AWAITING_REQUEST_PROCESSING,
+                    transactionDate: new Date()
+            ).save(failOnError: true)
+            new IllBorrowing(
+                    transactionNumber: 1L,
+                    requestType: "Loan",
                     transactionStatus: IllBorrowing.REQUEST_SENT,
                     transactionDate: new Date() - 3
             ).save(failOnError: true)
@@ -137,6 +149,7 @@ class IllTrackingSpec extends Specification {
         }
 
         then:
+        2 == IllTracking.list().size()
         illTracking
         illTracking.orderDate
         illTracking.receiveDate
