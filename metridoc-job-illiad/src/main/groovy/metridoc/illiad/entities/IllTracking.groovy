@@ -63,15 +63,12 @@ class IllTracking {
     }
 
     static updateFromIllBorrowing_AwaitingRequestProcessing() {
-        Set<Long> alreadyProcessedTransactions
-        //need to do a new one since this method might already be surrounded by a transaction
-        IllTracking.withNewTransaction {
-            alreadyProcessedTransactions = IllTracking.list().collect { it.transactionNumber } as Set
-        }
+        Set<Long> alreadyProcessedTransactions = IllTracking.list().collect { it.transactionNumber } as Set
         def itemsToStore = []
         LoggerFactory.getLogger(IllTracking).info "migrating all borrowing data that is awaiting request processing"
         IllBorrowing.findAllByTransactionStatus(IllBorrowing.AWAITING_REQUEST_PROCESSING).each { IllBorrowing borrowing ->
-            if (!alreadyProcessedTransactions.contains(borrowing.transactionNumber)) {
+            def alreadyProcessed = alreadyProcessedTransactions.contains(borrowing.transactionNumber)
+            if (!alreadyProcessed) {
                 addItem(borrowing, itemsToStore)
             }
         }
