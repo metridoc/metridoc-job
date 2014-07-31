@@ -43,28 +43,47 @@ class Validator {
         validator.validate()
         def List invalidGroup = validator.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
-            invalidGroup.each {date ->
+        if (invalidGroup.size() > 0) {
+            invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
-
+                def duplicateExceptions = ""  //Populated if errors are thrown during sync
+                def entries = new ArrayList()
                 def sqlStmt = "select s.library_id as lender,r.library_id as borrower,r.request_number, " +
                         " abs(cast(HASHBYTES('md5',p.patron_id) as int)) as patron_id,p.patron_type,r.author, " +
                         "r.title,r.local_item_found,r.publisher,r.publication_place,r.publication_year,r.edition,r.isbn,r.isbn_2, " +
                         "r.bibliography_num as LCCN,system_number as oclc_text,r.date_entered as request_date,d.date_processed as process_date, " +
                         "pl.pickup_location_desc as pickup_location,d.supplier_code_1 as supplier_code,h.call_number from " +
-                        specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
+                        specification.sourceTables + " where " + specification.sourceFilter +duplicateExceptions+specification.sourceGroup + " = '${date}'"
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_bd") { resultSet ->
                     log.info "syncing data for [$date]"
-                    try {camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
-                    } catch(Exception e){
-                        def split_exception = e.message.tokenize()
-                        def entry = split_exception[3]
-                        def key = split_exception[6]
-                        log.warn "*******************"
-                        log.warn "Problem entry is ${entry}"
-                        log.warn "Problem key is ${key}"
-                        throw e
+                    def success = false
+
+                    while (!success) {
+                        try {
+                            camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
+                            success = true
+                        } catch (Exception e) {
+                            def split_exception = e.message.tokenize()
+                            def entry = split_exception[3]
+                            def key = split_exception[6]
+                            log.warn "*******************"
+                            log.warn "Problem entry is ${entry}"
+                            log.warn "Problem key is ${key}"
+                            entries.add("'"+entry+"'")
+                            duplicateExceptions = "h.request_number not in ("
+                            duplicateExceptions += entries.join(", ")
+                            duplicateExceptions += ") and "
+                            log.warn "Adding following exclusion: ${duplicateExceptions}"
+                            sqlStmt = "select s.library_id as lender,r.library_id as borrower,r.request_number, " +
+                                    " abs(cast(HASHBYTES('md5',p.patron_id) as int)) as patron_id,p.patron_type,r.author, " +
+                                    "r.title,r.local_item_found,r.publisher,r.publication_place,r.publication_year,r.edition,r.isbn,r.isbn_2, " +
+                                    "r.bibliography_num as LCCN,system_number as oclc_text,r.date_entered as request_date,d.date_processed as process_date, " +
+                                    "pl.pickup_location_desc as pickup_location,d.supplier_code_1 as supplier_code,h.call_number from " +
+                                    specification.sourceTables + " where " + specification.sourceFilter +duplicateExceptions+specification.sourceGroup + " = '${date}'"
+                            
+
+                        }
                     }
                 }
             }
@@ -90,13 +109,13 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
-            invalidGroup.each {date ->
+        if (invalidGroup.size() > 0) {
+            invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
                 def sqlStmt = "select s.library_id as lender,r.library_id as borrower,r.request_number, " +
@@ -106,9 +125,9 @@ class Validator {
                         "pl.pickup_location_desc as pickup_location,d.supplier_code_1 as supplier_code,h.call_number from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_ezb") {resultSet ->
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_ezb") { resultSet ->
                     log.info "syncing data for [$date]"
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
@@ -128,22 +147,22 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
+        if (invalidGroup.size() > 0) {
             invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
-                def sqlStmt="select h.request_number, h.holdings_seq, h.supplier_code, h.call_number, d.date_processed as process_date from " +
+                def sqlStmt = "select h.request_number, h.holdings_seq, h.supplier_code, h.call_number, d.date_processed as process_date from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_ezb") {resultSet ->
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_ezb") { resultSet ->
                     log.info "syncing data for [$date]"
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
@@ -163,23 +182,23 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
-            invalidGroup.each {date ->
+        if (invalidGroup.size() > 0) {
+            invalidGroup.each { date ->
 
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
-                def sqlStmt="select h.request_number, h.holdings_seq, h.supplier_code, h.call_number, d.date_processed as process_date from " +
+                def sqlStmt = "select h.request_number, h.holdings_seq, h.supplier_code, h.call_number, d.date_processed as process_date from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
                 log.info "deleted any existing data for [$date]"
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_bd") { resultSet ->
                     log.info "syncing data for [$date]"
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
@@ -200,20 +219,20 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
+        if (invalidGroup.size() > 0) {
             invalidGroup.each { date ->
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
-                def sqlStmt="select a.request_number, a.time_stamp as print_date, a.note, d.date_processed as process_date, substring(e.event_rule,22,8) as library_id from " +
+                def sqlStmt = "select a.request_number, a.time_stamp as print_date, a.note, d.date_processed as process_date, substring(e.event_rule,22,8) as library_id from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_ezb") {resultSet ->
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_ezb") { resultSet ->
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
@@ -234,22 +253,22 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
-            invalidGroup.each {date ->
+        if (invalidGroup.size() > 0) {
+            invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
-                def sqlStmt="select a.request_number, a.time_stamp as print_date, a.note, d.date_processed as process_date, c.catalog_library_id as library_id from " +
+                def sqlStmt = "select a.request_number, a.time_stamp as print_date, a.note, d.date_processed as process_date, c.catalog_library_id as library_id from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_bd") { resultSet ->
                     log.info "syncing data for [$date]"
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
@@ -271,22 +290,22 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
-            invalidGroup.each {date ->
+        if (invalidGroup.size() > 0) {
+            invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
                 def sqlStmt = "select a.request_number, a.time_stamp as ship_date, a.exception_code, d.date_processed as process_date from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") { resultSet ->
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_bd") { resultSet ->
                     log.info "syncing data for [$date]"
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
@@ -307,21 +326,21 @@ class Validator {
                 sourceType: "Database"
         ]
 
-        ValidateDBload v = new ValidateDBload( specification )
+        ValidateDBload v = new ValidateDBload(specification)
         v.validate()
 
         def List invalidGroup = v.getInvalidData()
 
-        if ( invalidGroup.size()>0 ) {
+        if (invalidGroup.size() > 0) {
             invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
 
-                def sqlStmt="select a.request_number, a.time_stamp as ship_date, a.exception_code, d.date_processed as process_date from " +
+                def sqlStmt = "select a.request_number, a.time_stamp as ship_date, a.exception_code, d.date_processed as process_date from " +
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
 
-                camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_ezb") { resultSet ->
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                camelService.consume("sqlplus:" + sqlStmt + "?dataSource=dataSource_from_relais_ezb") { resultSet ->
+                    camelService.send("sqlplus:" + specification.loadingTable + "?dataSource=dataSource", resultSet)
                 }
             }
         }
