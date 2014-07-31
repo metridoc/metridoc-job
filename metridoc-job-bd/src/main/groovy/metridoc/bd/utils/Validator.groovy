@@ -57,7 +57,7 @@ class Validator {
                 camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
                     log.info "syncing data for [$date]"
                     try {camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
-                    } catch(InterruptedException e){
+                    } catch(Exception e){
                         def split_exception = e.message.tokenize()
                         def entry = split_exception[2]
                         def key = split_exception[5]
