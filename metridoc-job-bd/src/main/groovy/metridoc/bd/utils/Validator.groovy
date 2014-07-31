@@ -56,7 +56,16 @@ class Validator {
                         specification.sourceTables + " where " + specification.sourceFilter + specification.sourceGroup + " = '${date}'"
                 camelService.consume("sqlplus:"+sqlStmt+"?dataSource=dataSource_from_relais_bd") {resultSet ->
                     log.info "syncing data for [$date]"
-                    camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    try {camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
+                    } catch(InterruptedException e){
+                        def split_exception = e.message.tokenize()
+                        def entry = split_exception[2]
+                        def key = split_exception[5]
+                        log.warn "*******************"
+                        log.warn "Problem entry is ${entry}"
+                        log.warn "Problem key is ${key}"
+                        throw e
+                    }
                 }
             }
         }
