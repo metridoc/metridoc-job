@@ -59,8 +59,8 @@ class Validator {
                     try {camelService.send("sqlplus:"+specification.loadingTable+"?dataSource=dataSource", resultSet)
                     } catch(Exception e){
                         def split_exception = e.message.tokenize()
-                        def entry = split_exception[2]
-                        def key = split_exception[5]
+                        def entry = split_exception[3]
+                        def key = split_exception[6]
                         log.warn "*******************"
                         log.warn "Problem entry is ${entry}"
                         log.warn "Problem key is ${key}"
