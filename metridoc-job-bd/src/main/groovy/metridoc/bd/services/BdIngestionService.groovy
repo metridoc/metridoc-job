@@ -184,7 +184,7 @@ class BdIngestionService {
             	m.find()
             	result = Integer.valueOf(m.group(1))
             } catch (Exception e) {
-            	log.error "Error on value ${result}"
+            	log.error "Error on oclc text value ${oclcText}"
             	throw e
             }
         }
