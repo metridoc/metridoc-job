@@ -159,7 +159,10 @@ class BdIngestionService {
         def recordsToUpdate = [:]
 
         rows.each {row ->
-            recordsToUpdate[row.bibliography_id] = getNumber(row.oclc_text)
+            //Manually skip known problem value
+            if(row.oclc_text != "1259634B"){
+                recordsToUpdate[row.bibliography_id] = getNumber(row.oclc_text)
+            }
         }
 
         sql.withTransaction {
@@ -184,6 +187,7 @@ class BdIngestionService {
             	m.find()
             	result = Integer.valueOf(m.group(1))
             } catch (Exception e) {
+            	
             	log.error "Error on oclc text value ${oclcText}"
             	throw e
             }
