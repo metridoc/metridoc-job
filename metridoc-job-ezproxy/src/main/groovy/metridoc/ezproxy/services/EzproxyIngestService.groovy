@@ -193,11 +193,16 @@ class EzproxyIngestService extends DefaultService {
             assert fileFilter: FILE_FILTER_IS_NULL
             assert directory || camelUrl: EZ_DIRECTORY_IS_NULL
             if (directory) {
+                log.info "Validate directory: ${directory}"
                 assert directory.exists(): EZ_DIRECTORY_DOES_NOT_EXISTS(directory)
+            }
+            else{
+                log.info "Validate camelUrl: ${camelUrl}"
             }
         }
         else {
             assert file.exists(): EZ_FILE_DOES_NOT_EXIST(file)
+            log.info "Validate file: ${file}"
         }
     }
 }
