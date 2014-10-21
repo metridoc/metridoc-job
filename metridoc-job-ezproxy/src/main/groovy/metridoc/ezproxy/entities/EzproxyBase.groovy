@@ -147,15 +147,16 @@ abstract class EzproxyBase {
     @Override
     boolean shouldSave() {
         if(failedPopulate) {
+            log.info "Populate failed: ${failedPopulate"
             return false
         }
         String naturalKey = createNaturalKey()
         if (naturalKeyCache.add(naturalKey)) {
             def doesNotExist = !alreadyExists()
             if (doesNotExist) {
-                log.debug "validating [{}]", this
+                log.info "validating [{}]", this
                 if (!this.validate()) {
-                    log.debug "[$this] is invalid"
+                    log.info "[$this] is invalid"
                     if (this.errors.fieldErrorCount) {
                         def message = """
 error on field [${this.errors.fieldError.field}] with error code [${this.errors.fieldError.code}]
@@ -163,7 +164,7 @@ error on field [${this.errors.fieldError.field}] with error code [${this.errors.
     line: $lineNumber
 """
                         log.warn message
-                        log.debug "[{}] will not be saved", naturalKey
+                        log.info "[{}] will not be saved", naturalKey
                         return false
                     }
                     else {
