@@ -147,7 +147,7 @@ abstract class EzproxyBase {
     @Override
     boolean shouldSave() {
         if(failedPopulate) {
-            log.info "Populate failed: ${failedPopulate"
+            log.info "Populate failed: ${failedPopulate}"
             return false
         }
         String naturalKey = createNaturalKey()
