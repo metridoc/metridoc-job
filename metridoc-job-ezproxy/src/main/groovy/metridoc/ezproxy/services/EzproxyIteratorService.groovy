@@ -140,10 +140,10 @@ class EzproxyIteratorService extends FileStream<Map> {
         def fixedUrl = splitUrl[0]+":"+splitUrl[1]
         
         //Test fix
-        log.warn "Fixed Url = ${fixedUrl}"
+        //log.warn "Fixed Url = ${fixedUrl}"
         
-        validateUrl(url)
-        result.urlHost = new URL(result.url).host
+        validateUrl(fixedUrl)
+        result.urlHost = new URL(fixedUrl).host
         
          
     }
