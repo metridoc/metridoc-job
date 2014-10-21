@@ -128,6 +128,7 @@ class EzproxyIngestService extends DefaultService {
             }.filter {
                 boolean result
                 if (it.exception) {
+                    log.error "Exception: ${it.exception}"
                     result = false
                 }
                 else {
