@@ -133,6 +133,7 @@ class EzproxyIngestService extends DefaultService {
                 }
                 else {
                     result = helperInstance.acceptRecord(it)
+                    log.info "Accepted! ${result}"
                 }
                 if (!result) {
                     stats.ignored = stats.ignored + 1
