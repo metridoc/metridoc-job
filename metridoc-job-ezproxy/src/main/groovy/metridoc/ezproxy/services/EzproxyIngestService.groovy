@@ -137,6 +137,7 @@ class EzproxyIngestService extends DefaultService {
                     owner.log.info "Ignored: ${stats.ignored}"
                 }
                 if (!result) {
+                    owner.log.info "Accepted status: ${result?:'null'}"
                     stats.ignored = stats.ignored + 1
                 }
 
