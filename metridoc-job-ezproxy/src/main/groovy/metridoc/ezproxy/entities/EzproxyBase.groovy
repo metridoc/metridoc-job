@@ -105,6 +105,7 @@ abstract class EzproxyBase {
                 failedPopulate = true
             }
         }
+        log.info "failedPopulate: ${failedPopulate?:'null'}"
         log.debug "finished populating {}", body
     }
 
