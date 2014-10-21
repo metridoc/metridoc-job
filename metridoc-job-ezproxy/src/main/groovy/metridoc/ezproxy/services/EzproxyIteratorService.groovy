@@ -128,8 +128,24 @@ class EzproxyIteratorService extends FileStream<Map> {
     protected addUrlHosts(Map result) {
         String url = result.url
         assert url : "url is null or empty"
+        /* There are a lot of URLs of the following structure: 
+           "url:http://linkinghub.elsevier.com:80s_invisit=true"
+           and validateUrl is throwing fits about the :80s. 
+           
+           Because that is only the port info, I'm going to do a hacky fix to just get the host, 
+           since thats what we end up extracting anyway. 
+        
+        */
+        def splitUrl = url.split(':')
+        def fixedUrl = splitUrl[0]+":"+splitUrl[1]
+        
+        //Test fix
+        log.warn "Fixed Url = ${fixedUrl}"
+        
         validateUrl(url)
         result.urlHost = new URL(result.url).host
+        
+         
     }
 
     @SuppressWarnings("GrMethodMayBeStatic")
