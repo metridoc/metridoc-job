@@ -69,13 +69,14 @@ abstract class EzproxyBase {
     }
 
     boolean acceptRecord(Map body) {
-        log.info  "checking to accept record {}", body
+        log.debug  "checking to accept record {}", body
 
         boolean result = body.ezproxyId &&
                 body.urlHost
 
         if (!result) {
-            log.info "record {} was rejected", body
+            log.debug "record {} was rejected", body
+            log.info "record was rejected: ezproxyId=${body.ezproxyId ?: 'NULL'}, urlHost=${body.urlHost ?: 'NULL'"
             return false
         }
 
