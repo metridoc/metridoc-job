@@ -84,7 +84,6 @@ abstract class EzproxyBase {
         addDateValues(body)
 
         log.debug "record {} was accepted", body
-        log.info "Record accepted! ${result}"
         return result
     }
 
