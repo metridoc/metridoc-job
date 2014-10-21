@@ -133,16 +133,17 @@ class EzproxyIngestService extends DefaultService {
                 }
                 else {
                     result = helperInstance.acceptRecord(it)
-                    owner.log.info "Accepted! ${result?:'WAT'}"
+                    owner.log.info "Accepted record ${counter}! ${result?:'WAT'}"
                     owner.log.info "Ignored: ${stats.ignored}"
                 }
                 if (!result) {
-                    owner.log.info "Accepted status: ${result?:'null'}"
+                    owner.log.info "Rejected record ${counter}. Result status: ${result?:'null'}"
                     stats.ignored = stats.ignored + 1
                 }
-
+                owner.log.info "End result is ${result?:'null'}"
                 return result
             }.map {
+                owner.log.info "Writing record ${counter}"
                 def instance = entity.newInstance()
                 instance.populate(it)
                 stats.written = stats.written + 1
