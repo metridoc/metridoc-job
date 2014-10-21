@@ -76,7 +76,7 @@ abstract class EzproxyBase {
 
         if (!result) {
             log.debug "record {} was rejected", body
-            log.info "record was rejected: ezproxyId=${body.ezproxyId ?: 'NULL'}, urlHost=${body.urlHost ?: 'NULL'"
+            log.info "record was rejected: ezproxyId=${body.ezproxyId ?: 'NULL'}, urlHost=${body.urlHost ?: 'NULL'}"
             return false
         }
 
