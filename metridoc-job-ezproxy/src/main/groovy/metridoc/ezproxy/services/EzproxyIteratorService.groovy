@@ -50,7 +50,7 @@ class EzproxyIteratorService extends FileStream<Map> {
 
     Closure<Map> parser = {String line ->
         String[] items = line.split(delimiter)
-        log.info "Quick test of contents: state=${state?:'null'} ezproxyId=${ezproxyId?:'null'}"
+        log.info "Quick test of contents: state=${items[2]?:'null'} ezproxyId=${items[13]?:'null'}"
         def body = [:]
         ["patronId", "country", "ipAddress", "state", "city", "rank", "department", "rank", "ezproxyId", "url", "proxyDate"].each {
             int position = this."$it"
