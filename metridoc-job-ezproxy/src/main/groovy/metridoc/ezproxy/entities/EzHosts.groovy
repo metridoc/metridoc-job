@@ -80,7 +80,11 @@ class EzHosts extends EzproxyBase {
     boolean alreadyExists() {
         def answer
         withTransaction {
-            log.debug "checking for {} and {} for EzHosts", ezproxyId, urlHost
+            log.info "checking for {} and {} for EzHosts", ezproxyId, urlHost
+            def host = EzHosts.findByEzproxyIdAndUrlHost(ezproxyId, urlHost)
+            if(host){
+             log.info "host id = ${host.id}"
+            }
             answer = EzHosts.findByEzproxyIdAndUrlHost(ezproxyId, urlHost) != null
         }
 
