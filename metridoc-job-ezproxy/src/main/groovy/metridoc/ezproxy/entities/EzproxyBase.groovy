@@ -151,7 +151,9 @@ abstract class EzproxyBase {
             return false
         }
         String naturalKey = createNaturalKey()
+        log.info "Natural key is ${naturalKey}"
         if (naturalKeyCache.add(naturalKey)) {
+            log.info "natural key added"
             def doesNotExist = !alreadyExists()
             if (doesNotExist) {
                 log.info "validating [{}]", this
@@ -171,9 +173,9 @@ error on field [${this.errors.fieldError.field}] with error code [${this.errors.
                         throw new RuntimeException("unknown error occurred \n ${this.errors}")
                     }
                 }
-                log.debug "[{}] will be saved", naturalKey
+                log.info "[{}] will be saved", naturalKey
             } else {
-                log.debug "[{}] will not be saved", naturalKey
+                log.info "[{}] will not be saved", naturalKey
             }
 
             return doesNotExist
