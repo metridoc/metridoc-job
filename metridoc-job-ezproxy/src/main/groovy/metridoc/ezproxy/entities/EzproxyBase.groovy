@@ -181,7 +181,7 @@ error on field [${this.errors.fieldError.field}] with error code [${this.errors.
             return doesNotExist
         }
 
-        log.debug "[{}] is already in the cache, will not save", naturalKey
+        log.info "[{}] is already in the cache, will not save", naturalKey
         return false
     }
 
