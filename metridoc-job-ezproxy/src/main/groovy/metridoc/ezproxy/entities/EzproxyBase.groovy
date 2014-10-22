@@ -155,6 +155,7 @@ abstract class EzproxyBase {
         if (naturalKeyCache.add(naturalKey)) {
             log.info "natural key added"
             def doesNotExist = !alreadyExists()
+            log.info "Exists: ${doesNotExist}"
             if (doesNotExist) {
                 log.info "validating [{}]", this
                 if (!this.validate()) {
