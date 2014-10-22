@@ -143,10 +143,12 @@ class EzproxyIngestService extends DefaultService {
                 owner.log.info "Writing record ${counter}"
                 def instance = entity.newInstance()
                 instance.populate(it)
+                owner.log.info "Populated record ${counter}"
                 stats.written = stats.written + 1
                 instance.naturalKeyCache = naturalKeyCache
                 return instance
             }.filter { EzproxyBase base ->
+                owner.log.info "Testing shouldSave record ${counter}"
                 def response = base.shouldSave()
                 if (!response) {
                     stats.written = stats.written - 1
