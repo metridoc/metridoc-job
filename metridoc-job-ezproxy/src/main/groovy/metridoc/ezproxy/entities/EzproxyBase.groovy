@@ -147,18 +147,18 @@ abstract class EzproxyBase {
     @Override
     boolean shouldSave() {
         if(failedPopulate) {
-            log.info "Populate failed: ${failedPopulate}"
+            log.debug "Populate failed: ${failedPopulate}"
             return false
         }
         String naturalKey = createNaturalKey()
-        log.info "Natural key is ${naturalKey}"
+        log.debug "Natural key is ${naturalKey}"
         if (naturalKeyCache.add(naturalKey)) {
-            log.info "natural key added"
+            log.debug "Natural key added"
             def doesNotExist = !alreadyExists()
             if (doesNotExist) {
-                log.info "validating [{}]", this
+                log.debug "validating [{}]", this
                 if (!this.validate()) {
-                    log.info "[$this] is invalid"
+                    log.debug "[$this] is invalid"
                     if (this.errors.fieldErrorCount) {
                         def message = """
 error on field [${this.errors.fieldError.field}] with error code [${this.errors.fieldError.code}]
@@ -166,22 +166,22 @@ error on field [${this.errors.fieldError.field}] with error code [${this.errors.
     line: $lineNumber
 """
                         log.warn message
-                        log.info "[{}] will not be saved", naturalKey
+                        log.debug "[{}] will not be saved", naturalKey
                         return false
                     }
                     else {
                         throw new RuntimeException("unknown error occurred \n ${this.errors}")
                     }
                 }
-                log.info "[{}] will be saved", naturalKey
+                log.debug "[{}] will be saved", naturalKey
             } else {
-                log.info "[{}] will not be saved", naturalKey
+                log.debug "[{}] will not be saved", naturalKey
             }
 
             return doesNotExist
         }
 
-        log.info "[{}] is already in the cache, will not save", naturalKey
+        log.debug "[{}] is already in the cache, will not save", naturalKey
         return false
     }
 
