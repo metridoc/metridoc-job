@@ -160,7 +160,7 @@ class BdIngestionService {
 
         rows.each {row ->
             //Manually skip known problem value
-            if(row.oclc_text != "1259634B"){
+            if(row.oclc_text != "1259634B" && row.oclc_text!="871203082c"){
                 recordsToUpdate[row.bibliography_id] = getNumber(row.oclc_text)
             }
         }
