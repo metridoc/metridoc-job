@@ -1,4 +1,4 @@
-//mdoc https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/basics/CommandLine.groovy --foo --bar=bam nonFlagParam
+//mdoc https://raw.githubusercontent.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/basics/CommandLine.groovy
 
 configure()
 
