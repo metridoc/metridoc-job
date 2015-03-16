@@ -2,7 +2,7 @@ This is the metridoc job to ingest illiad data into the metridoc repo.  First yo
 command line utility `mdoc` to run it.  To install `mdoc` in a bash environment, you can run:
 
 ```bash
-curl -s https://raw.github.com/metridoc/metridoc-job-cli/master/src/etc/install-mdoc.sh | sh
+curl -s https://raw.githubusercontent.com/metridoc/metridoc-job/master/install-mdoc.sh | sh
 ```
 
 for more details on `mdoc`, please see the [wiki](https://github.com/metridoc/metridoc-wiki/wiki) or the
@@ -14,15 +14,7 @@ You can either install one of the [releases](https://github.com/metridoc/metrido
 code in its current state.  To install the code in its current form, do 
 
 ```bash
-mdoc install https://github.com/metridoc/metridoc-job-illiad/archive/master.zip
-```
-
-To install a specific release, do
-
-
-```bash
-#replace the version number with the one you want
-mdoc install https://github.com/metridoc/metridoc-job-illiad/archive/v0.1.0.zip
+mdoc install https://github.com/metridoc/metridoc-job/archive/master.zip metridoc-job-illiad
 ```
 
 After you have installed the job run `mdoc list-jobs` to make sure it installed correctly and `mdoc help illiad` to get 
