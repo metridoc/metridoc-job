@@ -98,7 +98,7 @@ class RunJobCommandIntSpec extends AbstractFunctionalSpec {
     
     void "run a remote script"() {
         when:
-        int exitCode = runCommand(["https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/testJobs/script/simpleScript.groovy", "--embeddedDataSource", "--mergeMetridocConfig=false"])
+        int exitCode = runCommand(["https://raw.githubusercontent.com/metridoc/metridoc-job/master/metridoc-job-cli/src/testJobs/script/simpleScript.groovy", "--embeddedDataSource", "--mergeMetridocConfig=false"])
 
         then:
         0 == exitCode
