@@ -72,7 +72,7 @@ class HelpCommand implements Command {
                 if(version != mdocVersion) {
                     println ""
                     println "version [$version] is available, to install run: "
-                    println "    curl -s https://raw.github.com/metridoc/metridoc-job/master/install-mdoc.sh | sh"
+                    println "    curl -s https://raw.githubusercontent.com/metridoc/metridoc-job/master/install-mdoc.sh | sh"
                 }
             }
             catch (Exception ignore) {
