@@ -7,7 +7,7 @@ For complete documentation see the metridoc [wiki](https://github.com/metridoc/m
 #### Installation
 
 in a bash environment, simply run 
-`curl -s https://raw.github.com/metridoc/metridoc-job-cli/master/src/etc/install-mdoc.sh | sh`, otherwise one can download
+`curl -s https://raw.githubusercontent.com/metridoc/metridoc-job/master/install-mdoc.sh | sh`, otherwise one can download
 the distribution from bintray at https://bintray.com/upennlib/metridoc-distributions and set path variables appropriatelly.
 
 #### Quick Start
