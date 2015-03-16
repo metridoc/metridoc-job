@@ -4,8 +4,7 @@ import metridoc.service.gorm.GormService
 import metridoc.utils.DataSourceConfigUtil
 
 /**
- * mdoc https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/beyondScripts/gorm/basicGormExample.groovy
- */
+ * https://raw.githubusercontent.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/beyondScripts/gorm/basicGormExample.groovy*/
 dataSource = DataSourceConfigUtil.embeddedDataSource
 
 //will used the bound dataSource above.  If not set, it will use the default dataSource defined in
