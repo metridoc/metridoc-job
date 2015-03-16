@@ -1,5 +1,5 @@
 /**
- * mdoc https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/streaming/streamResultSet.groovy
+ * mdoc https://raw.githubusercontent.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/beyondScripts/streaming/streamResultSet.groovy
  */
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
