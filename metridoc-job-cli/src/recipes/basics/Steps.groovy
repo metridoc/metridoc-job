@@ -1,4 +1,4 @@
-//mdoc https://raw.github.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/basics/Steps.groovy
+//mdoc https://raw.githubusercontent.com/metridoc/metridoc-job/master/metridoc-job-cli/src/recipes/basics/StepsDeps.groovy
 
 step(foo: "running foo") {
     println "foo has run"
