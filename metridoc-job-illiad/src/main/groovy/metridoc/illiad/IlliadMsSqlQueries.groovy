@@ -24,10 +24,12 @@ class IlliadMsSqlQueries {
     def groupSqlStmt = "select distinct GroupNumber as group_no, GroupName as group_name from Groups"
 
     def groupLinkSqlStmt = "select distinct GroupNumber as group_no, LenderString as lender_code from GroupsLink"
-
+    
+    /*BillingCategory was split into ArticleBillingCategory and LoanBillingCategory. 
+    These two values are identical in almost all cases, so only ArticleBillingCategory is selected to preserve our database structure*/
     def lenderAddrSqlStmt = { String lenderTableName ->
         "select distinct LenderString as lender_code, LibraryName as library_name, " +
-                " BillingCategory as billing_category, address1+'; '+address2+'; '+address3+'; '+address4 as address " +
+                " ArticleBillingCategory as billing_category, address1+'; '+address2+'; '+address3+'; '+address4 as address " +
                 " from ${lenderTableName}"
     }
 
