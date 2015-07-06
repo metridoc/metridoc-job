@@ -113,8 +113,11 @@ class IlliadService {
             camelService.with {
                 consumeNoWait("sqlplus:${value}?dataSource=dataSource_from_illiad") { ResultSet resultSet ->
                     while (resultSet.next()) {
-                         String cited_in = resultSet.getString(17)
-                         log.info(${cited_in})
+                         ResultSetMetaData rsmd = resultSet.getMetaData();
+                         int columnsNumber = rsmd.getColumnCount();
+                         for ( int i=1, y=0; i<numOfCols+1; i++,y++ ){
+                                 log.info(${resultSet.getString(i)})
+                         }
                     }
                     send("sqlplus:${key}?dataSource=dataSource", resultSet)
                 }
