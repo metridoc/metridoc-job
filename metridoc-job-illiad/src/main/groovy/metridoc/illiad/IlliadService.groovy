@@ -112,6 +112,10 @@ class IlliadService {
             log.info("migrating to ${key} using \n    ${value}" as String)
             camelService.with {
                 consumeNoWait("sqlplus:${value}?dataSource=dataSource_from_illiad") { ResultSet resultSet ->
+                    while (resultSet.next()) {
+                         String cited_in = rs.getString("cited_in");
+                         log.info(${cited_in})
+                    }
                     send("sqlplus:${key}?dataSource=dataSource", resultSet)
                 }
             }
