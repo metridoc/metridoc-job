@@ -118,7 +118,7 @@ class IlliadService {
                              ResultSetMetaData rsmd = resultSet.getMetaData();
                              int columnsNumber = rsmd.getColumnCount();
                              for (int i=0; i<columnsNumber;i++){
-                                 String name = rsmd.getColumnName(i)
+                                 String name = rsmd.getColumnName(i) ?: "${i} is out of bounds"
                                  log.info(name)
                                  //String item = resultSet.getString(i)
                                  //log.info("${item}")
