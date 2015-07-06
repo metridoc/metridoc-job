@@ -120,7 +120,9 @@ class IlliadService {
                              for (int i=1; i<=columnsNumber;i++){
                                  if(rsmd.getColumnName(i).contains("cited") || rsmd.getColumnName(i).contains("Cited")){
                                      String item = resultSet.getString(i)
-                                     if(item.length()>200){log.info("${item}")}
+                                     if(item){
+                                         if(item.length()>200){log.info("${item}")}
+                                     }
                                  }
                              }
                          }
