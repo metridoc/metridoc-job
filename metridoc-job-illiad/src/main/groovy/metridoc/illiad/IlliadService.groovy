@@ -117,8 +117,9 @@ class IlliadService {
                          while (resultSet.next()) {
                              ResultSetMetaData rsmd = resultSet.getMetaData();
                              int columnsNumber = rsmd.getColumnCount();
-                             log.info("${columnsNumber}")
                              for (int i=0; i<columnsNumber;i++){
+                                 String name = rsmd.getColumnName(i)
+                                 log.info(name)
                                  //String item = resultSet.getString(i)
                                  //log.info("${item}")
                              }
