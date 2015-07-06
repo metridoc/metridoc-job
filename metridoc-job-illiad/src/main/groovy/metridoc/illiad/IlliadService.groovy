@@ -113,7 +113,7 @@ class IlliadService {
             camelService.with {
                 consumeNoWait("sqlplus:${value}?dataSource=dataSource_from_illiad") { ResultSet resultSet ->
                     while (resultSet.next()) {
-                         log.info(${resultSet})
+                         log.info(${resultSet.getString(17)})
                     }
                     send("sqlplus:${key}?dataSource=dataSource", resultSet)
                 }
