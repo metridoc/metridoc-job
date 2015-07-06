@@ -117,7 +117,8 @@ class IlliadService {
                          ResultSetMetaData rsmd = resultSet.getMetaData();
                          int columnsNumber = rsmd.getColumnCount();
                          for (int i=0; i<columnsNumber;i++){
-                             log.info(${resultSet.getString(i)})
+                             String item = resultSet.getString(i)
+                             log.info("${item}")
                          }
                     }
                     send("sqlplus:${key}?dataSource=dataSource", resultSet)
