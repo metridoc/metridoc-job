@@ -30,6 +30,7 @@ import metridoc.utils.DataSourceConfigUtil
 
 import javax.sql.DataSource
 import java.sql.ResultSet
+import java.sql ResultSetMetaData
 import java.sql.SQLException
 import java.text.SimpleDateFormat
 
