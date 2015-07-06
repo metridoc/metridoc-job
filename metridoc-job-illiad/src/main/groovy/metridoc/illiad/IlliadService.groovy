@@ -117,15 +117,11 @@ class IlliadService {
                          while (resultSet.next()) {
                              ResultSetMetaData rsmd = resultSet.getMetaData();
                              int columnsNumber = rsmd.getColumnCount();
-                             for (int i=0; i<columnsNumber;i++){
-                                 try{
-                                     String name = rsmd.getColumnName(i)
-                                      log.info(name)
-                                 }catch(Exception e){
-                                     log.info("${i} is out of bounds") 
+                             for (int i=1; i<=columnsNumber;i++){
+                                 if(rsmd.getColumnName(i).contains("cited") || rsmd.getColumnName(i).contains("Cited")){
+                                     String item = resultSet.getString(i)
+                                     log.info("${item}")
                                  }
-                                 //String item = resultSet.getString(i)
-                                 //log.info("${item}")
                              }
                          }
                     }
