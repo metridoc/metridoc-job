@@ -45,7 +45,7 @@ class IlliadMsSqlQueries {
                 " PhotoJournalVolume as photo_journal_volume, PhotoJournalIssue as photo_journal_issue, " +
                 " PhotoJournalMonth as photo_journal_month, PhotoJournalYear as photo_journal_year, " +
                 " PhotoJournalInclusivePages as photo_journal_inclusive_pages, PhotoArticleAuthor as photo_article_author, " +
-                " PhotoArticleTitle as photo_article_title, CitedIn as cited_in, TransactionStatus as transaction_status, " +
+                " PhotoArticleTitle as photo_article_title, SUBSTRING(CitedIn,0,255) as cited_in, TransactionStatus as transaction_status, " +
                 " TransactionDate as transaction_date, ISSN, ESPNumber as ESP_number, LendingString as lender_codes, " +
                 " LendingLibrary as lending_library, ReasonForCancellation as reason_for_cancellation, CallNumber as call_number, " +
                 " Location as location, ProcessType as process_type, SystemID as system_id, IFMCost as IFM_cost, " +
