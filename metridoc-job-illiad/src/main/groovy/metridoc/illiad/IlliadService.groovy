@@ -113,21 +113,6 @@ class IlliadService {
             log.info("migrating to ${key} using \n    ${value}" as String)
             camelService.with {
                 consumeNoWait("sqlplus:${value}?dataSource=dataSource_from_illiad") { ResultSet resultSet ->
-                    if(resultSet){
-                         while (resultSet.next()) {
-                             ResultSetMetaData rsmd = resultSet.getMetaData();
-                             int columnsNumber = rsmd.getColumnCount();
-                             for (int i=1; i<=columnsNumber;i++){
-                                 if(rsmd.getColumnName(i).contains("cited") || rsmd.getColumnName(i).contains("Cited")){
-                                     String item = resultSet.getString(i)
-                                     if(item){
-                                         if(item.length()>200){log.info("${item}")}
-                                     }
-                                 }
-                             }
-                         }
-                    }
-                    resultSet.beforeFirst()
                     send("sqlplus:${key}?dataSource=dataSource", resultSet)
                 }
             }
