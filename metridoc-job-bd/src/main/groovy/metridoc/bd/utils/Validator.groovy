@@ -154,9 +154,6 @@ class Validator {
                                     "r.bibliography_num as LCCN,oclc_num as oclc,r.date_entered,r.date_entered as request_date,d.date_processed as process_date, " +
                                     "pl.pickup_location_desc as pickup_location,d.supplier_code_1 as supplier_code,h.call_number from " +
                                     specification.sourceTables + " where " + specification.sourceFilter +duplicateExceptions+specification.sourceGroup + " = '${date}'"
-                            
-                            throw e;
-
                         }
                     }
                 }
