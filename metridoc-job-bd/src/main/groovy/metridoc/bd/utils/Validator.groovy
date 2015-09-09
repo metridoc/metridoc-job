@@ -118,6 +118,8 @@ class Validator {
             invalidGroup.each { date ->
                 log.info "deleting any existing data for [$date]"
                 sql.execute("delete from " + specification.loadingTable + " where " + specification.loadingGroup + " = '${date}'")
+                def duplicateExceptions = ""  //Populated if errors are thrown during sync
+                def entries = new ArrayList()
                 def sqlStmt = "select s.library_id as lender,r.library_id as borrower,r.request_number, " +
                         " abs(cast(HASHBYTES('md5',p.patron_id) as int)) as patron_id,p.patron_type,r.author, " +
                         "r.title,r.local_item_found,r.publisher,r.publication_place,r.publication_year,r.edition,r.isbn,r.isbn_2, " +
