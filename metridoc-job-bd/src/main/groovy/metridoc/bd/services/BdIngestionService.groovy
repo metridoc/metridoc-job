@@ -183,7 +183,7 @@ class BdIngestionService {
 
         if(result == null) {
             try{
-            	def m = oclcText =~ /^[^0-9]*(\d+)[^0-9]*$/
+            	def m = oclcText =~ /^[^0-9]*(\d+)[^0-9]*/
             	m.find()
             	result = Integer.valueOf(m.group(1))
             } catch (Exception e) {
