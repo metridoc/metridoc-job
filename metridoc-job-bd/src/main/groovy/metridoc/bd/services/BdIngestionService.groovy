@@ -160,7 +160,7 @@ class BdIngestionService {
 	//New problem value: 'DKN-10017523' for key 'uk_ezb_bibliography_request_number'
         rows.each {row ->
             //Manually skip known problem value
-            if(row.oclc_text != "1259634B" && row.oclc_text!="871203082c" && row.oclc_text != "2995398N"){
+            if(row.oclc_text != "1259634B" && row.oclc_text!="871203082c" && row.oclc_text != "2995398N" && row.oclc_text != "780480618051995"){
                 recordsToUpdate[row.bibliography_id] = getNumber(row.oclc_text)
             }
         }
@@ -187,7 +187,7 @@ class BdIngestionService {
             	m.find()
             	result = Integer.valueOf(m.group(1))
             } catch (Exception e) {
-            	
+
             	log.error "Error on oclc text value ${oclcText}"
             	throw e
             }
