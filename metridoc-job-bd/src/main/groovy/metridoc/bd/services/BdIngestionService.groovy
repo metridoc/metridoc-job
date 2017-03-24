@@ -160,9 +160,12 @@ class BdIngestionService {
 	//New problem value: 'DKN-10017523' for key 'uk_ezb_bibliography_request_number'
         rows.each {row ->
             //Manually skip known problem value
-            if(row.oclc_text != "1259634B" && row.oclc_text!="871203082c" && row.oclc_text != "2995398N"){
+
+            //Metridoc assumes oclc_text values incoming are integers.
+            //This cannot be guaranteed, so if the assumption is invalid, we are ignoring the record.
+            //if(row.oclc_text != "1259634B" && row.oclc_text!="871203082c" && row.oclc_text != "2995398N" && row.oclc_text != "780480618051995"){
                 recordsToUpdate[row.bibliography_id] = getNumber(row.oclc_text)
-            }
+            //}
         }
 
         sql.withTransaction {
@@ -179,18 +182,6 @@ class BdIngestionService {
         }
         catch (Throwable ignored) {
             //ignore, must not be a number
-        }
-
-        if(result == null) {
-            try{
-            	def m = oclcText =~ /^[^0-9]*(\d+)[^0-9]*/
-            	m.find()
-            	result = Integer.valueOf(m.group(1))
-            } catch (Exception e) {
-            	
-            	log.error "Error on oclc text value ${oclcText}"
-            	throw e
-            }
         }
 
         return result
