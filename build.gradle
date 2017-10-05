@@ -29,7 +29,7 @@ subprojects {
 
     check.dependsOn("test")
     project.ext.archivesBaseName = project.name
-    def mavenExclusions = ["metridoc-job-cli", "metridoc-job-ezproxy", "metridoc-job-funds", "metridoc-job-bd"]
+    def mavenExclusions = ["metridoc-job-cli", "metridoc-job-ezproxy", "metridoc-job-funds", "metridoc-job-bd", , "metridoc-job-gate"]
     if(!mavenExclusions.contains(project.name)) {
         apply plugin: 'maven'
 
