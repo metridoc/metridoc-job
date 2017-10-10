@@ -32,6 +32,8 @@ class GateSQLService {
 
 	private static String getMaxIdStmt = '''SELECT max(entry_id) FROM metridoc.gate_entry_record;''';
 
+	private static String deleteEntryRecordsByMonth = '''DELETE FROM gate_entry_record WHERE entry_datetime BETWEEN ? AND ?;'''
+
 	private static Connection conn = null;
 
 	private static String url = "jdbc:mysql://localhost:3306/metridoc";
@@ -167,6 +169,44 @@ class GateSQLService {
          	return false;;
 		}
 		return true;
+	}
+
+	private static String addZero(val){
+		if(val.length() == 1){
+			return '0'+val;
+		}else{
+			return val;
+		}
+	}
+
+	public static void deleteEntryRecords(month, year) {
+		String monthStr = addZero(Integer.toString(month))
+		String startDatetime = "${year}-${monthStr}-01 00:00:00";
+		String endDatetime;
+		if(month == 12){
+			year++;
+			endDatetime = "${year}-01-01 00:00:00"
+		}else{
+			month++;
+			monthStr = addZero(Integer.toString(month));
+			endDatetime = "${year}-${monthStr}-01 00:00:00";
+		}
+		try
+     	{
+			Class.forName(driver);
+			conn = DriverManager.getConnection(url,userName,password);
+			PreparedStatement preparedStmt = conn.prepareStatement(deleteEntryRecordsByMonth);
+			preparedStmt.setString(1, startDatetime);
+			preparedStmt.setString(2, endDatetime);
+			
+			preparedStmt.executeUpdate();
+			
+			conn.close();
+		} catch (Exception e) {
+         	e.printStackTrace();
+         	println("Deleteion failed");
+			System.exit(0);
+		}
 	}
 
 	public static HashMap<String, Integer> getAllDoors() {
