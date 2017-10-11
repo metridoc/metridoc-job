@@ -73,6 +73,8 @@ class GateCSVFileService {
 
 	private static String reformatTime(row) {
 		//combine column of date and column of time to be datetime
+		//acceptable date format: MM/DD/YYYY
+		//acceptable time format: HH:MM AM/PM; HH:MM:SS AM/PM; HH:MM:SS; HH:MM
 		def date = row[0].split('/');
 		if(date.size() < 3){
 			return "";
@@ -80,24 +82,28 @@ class GateCSVFileService {
 		def datetime = date[2] + '-' + addZero(date[0]) + '-' + addZero(date[1]) + ' ';
 		if(row[1][-2..-1] == 'AM' || row[1][-2..-1] == 'am') {
 			row[1] = row[1].split(' ')[0];
-			def (hour, minute, second) = row[1].split(':');
-			if(hour == '12'){
-				hour = '00';
+			def time = row[1].split(':');
+			if(time[0] == '12'){
+				time[0] = '00';
 			}
-			datetime += addZero(hour) + ':' + addZero(minute) + ':00';
+			datetime += addZero(time[0]) + ':' + addZero(time[1]) + ':00';
 		}else if(row[1][-2..-1] == 'PM' || row[1][-2..-1] == 'pm') {
 			row[1] = row[1].split(' ')[0];
-			def (hour, minute, second) = row[1].split(':');
-			if(hour != '12'){
-				hour = String.valueOf(hour.toInteger() + 12);
+			def time = row[1].split(':');
+			if(time[0] != '12'){
+				time[0] = String.valueOf(time[0].toInteger() + 12);
 			}
-			datetime += addZero(hour) + ':' + addZero(minute) + ':00';
+			datetime += addZero(time[0]) + ':' + addZero(time[1]) + ':00';
+		}else{
+			def time = row[1].split(':');
+			datetime += addZero(time[0]) + ':' + addZero(time[1]) + ':00';
 		}
 		return datetime;
 	}
 
 	private static String changeDatetimeFormat(datetime){
 		//change datetime format in only one column to match the format with SQL database
+		//acceptable datetime format: MM/DD/YYYY HH:MM:SS or MM/DD/YYYY HH:MM
 		def dateAndTime = datetime.split(' ');
 		if(dateAndTime.size()<2){
 			return '';

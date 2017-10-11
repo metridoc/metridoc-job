@@ -1,3 +1,10 @@
-This is the job README
+Install:
+In your terminal in the metridoc-job-gate directory, type "mdoc install ."
 
-run mdoc help <job name> to print this file
+Purpose:
+1. Import library entry data through csv files.
+2. Delete a month's library entry data from SQL database.
+
+Usages:
+1. To import a csv file, type "mdoc gate filename" in your terminal. e.g. "mdoc gate April_gates_2017.csv"
+2. To delete a month's data, type "mdoc gate month year" in your terminal. e.g. "mdoc gate 4 2017"
