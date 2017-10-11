@@ -18,15 +18,20 @@ import java.io.File
 class GateCSVFileService {
 
 	public static boolean checkFileName(filename) {
+		//check if the last 4 characters of the filename is ".csv"
 		return filename[-4..-1] == '.csv';
 	}
 	
 	public static void readFile(fileName, rowArr) {
 		new File(fileName).eachLine {line ->
+			//split each line into an array
 		 	def row = line.split(',');
+		 	//add processed row into rowArr
 		 	rowArr.add(processRow(row));
 		}
+		//remove the first row, which is column headers
 		rowArr.remove(0);
+		//remove the last row, which is empty
 		rowArr.remove(rowArr.size() - 1);
 	}
 
@@ -37,6 +42,9 @@ class GateCSVFileService {
 		def center;
 		def department;
 		def usc;
+		//if row size is 10 or 6, we assume that date and time are in 2 different columns
+		//if row size is 9 or 5, we assume that date and time are in the same column
+		//if row size is 5 or 6, we assume that no value was provided in the affiliation, center, department, USC cells
 		if(row.size() == 10 || row.size() == 6){
 			datetime = reformatTime(row);
 			door = row[2];
@@ -68,6 +76,7 @@ class GateCSVFileService {
 		}else{
 			return [];
 		}
+		//return an array without sensitive identification information
 		return [datetime, door, affiliation, center, department, usc];
 	}
 
@@ -75,6 +84,8 @@ class GateCSVFileService {
 		//combine column of date and column of time to be datetime
 		//acceptable date format: MM/DD/YYYY
 		//acceptable time format: HH:MM AM/PM; HH:MM:SS AM/PM; HH:MM:SS; HH:MM
+		//convert into datetime format that can be accepted by SQL: YYYY-MM-DD HH:MM:SS
+		//Ignore seconds in reformatting, all seconds are changed to 00
 		def date = row[0].split('/');
 		if(date.size() < 3){
 			return "";
@@ -84,6 +95,7 @@ class GateCSVFileService {
 			row[1] = row[1].split(' ')[0];
 			def time = row[1].split(':');
 			if(time[0] == '12'){
+				//if it is 12 AM, change to 00 o'clock (military time)
 				time[0] = '00';
 			}
 			datetime += addZero(time[0]) + ':' + addZero(time[1]) + ':00';
@@ -91,10 +103,13 @@ class GateCSVFileService {
 			row[1] = row[1].split(' ')[0];
 			def time = row[1].split(':');
 			if(time[0] != '12'){
+				//if it is 12 PM, keep it 12 o'clock 
+				//if it is not 12 but it's PM, then add 12 to the original hour(military time)
 				time[0] = String.valueOf(time[0].toInteger() + 12);
 			}
 			datetime += addZero(time[0]) + ':' + addZero(time[1]) + ':00';
 		}else{
+			//no AM/PM, then directly append time to date
 			def time = row[1].split(':');
 			datetime += addZero(time[0]) + ':' + addZero(time[1]) + ':00';
 		}
@@ -104,6 +119,7 @@ class GateCSVFileService {
 	private static String changeDatetimeFormat(datetime){
 		//change datetime format in only one column to match the format with SQL database
 		//acceptable datetime format: MM/DD/YYYY HH:MM:SS or MM/DD/YYYY HH:MM
+		//change into datetime format that can be accepted by SQL: YYYY-MM-DD HH:MM:SS
 		def dateAndTime = datetime.split(' ');
 		if(dateAndTime.size()<2){
 			return '';
@@ -122,6 +138,7 @@ class GateCSVFileService {
 	}
 
 	private static String addZero(val){
+		//This function adds a 0 to single digits to keep the format consistent
 		if(val.length() == 1){
 			return '0'+val;
 		}else{
