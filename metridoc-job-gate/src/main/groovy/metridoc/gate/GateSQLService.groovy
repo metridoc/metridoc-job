@@ -38,8 +38,8 @@ class GateSQLService {
 
 	private static Connection conn = null;
 
-	private static String url = "jdbc:mysql://localhost:3306/metridoc";
-	private static String driver = "com.mysql.jdbc.Driver";
+	private static String url;
+	private static String driver;
 	private static String userName; 
 	private static String password;
 	private static int maxId;
