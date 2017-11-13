@@ -6,6 +6,8 @@ import metridoc.core.Step
 import metridoc.core.services.CamelService
 import metridoc.core.tools.CamelTool
 import metridoc.core.tools.RunnableTool
+import metridoc.service.gorm.GormService
+import metridoc.utils.DataSourceConfigUtil
 
 import java.sql.*;
 import java.text.SimpleDateFormat
@@ -38,8 +40,8 @@ class GateSQLService {
 
 	private static String url = "jdbc:mysql://localhost:3306/metridoc";
 	private static String driver = "com.mysql.jdbc.Driver";
-	private static String userName = "root"; 
-	private static String password = "password";
+	private static String userName; 
+	private static String password;
 	private static int maxId;
 	private static Statement stmt;
 
@@ -48,6 +50,13 @@ class GateSQLService {
 	private static HashMap<String, Integer> newCenters = [:];
 	private static HashMap<String, Integer> newDepartments = [:];
 	private static HashMap<String, Integer> newUSCs = [:];
+
+	public static void setPasswordUsername(String urlAddr, String drv, String un, String pd){
+		url = urlAddr;
+		driver = drv;
+		userName = un;
+		password = pd;
+	}
 
 	public static HashMap<String, Integer> getQuery(query){
 		def map = [:];

@@ -1,11 +1,19 @@
-configure()
-
 import metridoc.gate.GateCSVFileService
 import metridoc.gate.GateSQLService
 import metridoc.gate.GateConvertNameToIdService
+import metridoc.gate.parseDbConfigService
 import java.util.Scanner; 
 
+configure()
+
+
 if(argsMap.params){
+	def authMap = parseDbConfigService.parseDbAuthenticationInfo();
+	def username = authMap.get("username");
+	def password = authMap.get("password");
+	def driver = authMap.get("driver");
+	def url = authMap.get("url");
+	GateSQLService.setPasswordUsername(url, driver, username, password);
 	if(argsMap.params.size() == 1){
 		//If there is only 1 parameter, we think the user wants to import a csv file
 		String fileName = argsMap.params[0];
@@ -14,6 +22,8 @@ if(argsMap.params){
 			def rowArr = [];
 			//Process each row in the csv file and add them to rowArr variable
 			GateCSVFileService.readFile(fileName, rowArr);
+
+
 			//For each category, get all existing options from the database and construct a map of [option name: option id]
 			def doorMap = GateSQLService.getAllDoors();
 			def affiliationMap = GateSQLService.getAllAffiliations();
