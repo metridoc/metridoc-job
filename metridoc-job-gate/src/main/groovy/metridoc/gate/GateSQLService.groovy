@@ -28,11 +28,11 @@ class GateSQLService {
 	private static String insertAffiliationStmt = '''INSERT INTO gate_affiliation (affiliation_id, affiliation_name) VALUES (?, ?)'''
 	private static String insertCenterStmt = '''INSERT INTO gate_center (center_id, center_name) VALUES (?, ?)''';
 	private static String insertDepartmentStmt = '''INSERT INTO gate_department (department_id, department_name) VALUES (?, ?)''';
-	private static String insertUSCStmt = '''INSERT INTO gate_usc (USC_id, USC_name) VALUES (?, ?)''';
+	private static String insertUSCStmt = '''INSERT INTO gate_USC (USC_id, USC_name) VALUES (?, ?)''';
 
-	private static String insertRecordStmt = '''INSERT INTO gate_entry_record (entry_datetime, door, affiliation, center, department, usc, entry_id) VALUES (?, ?, ?, ?, ?, ?, ?)'''
+	private static String insertRecordStmt = '''INSERT INTO gate_entry_record (entry_datetime, door, affiliation, center, department, usc) VALUES (?, ?, ?, ?, ?, ?)'''
 
-	private static String getMaxIdStmt = '''SELECT max(entry_id) FROM metridoc.gate_entry_record;''';
+	private static String getMaxIdStmt = '''SELECT max(entry_id) FROM gate_entry_record;''';
 
 	private static String deleteEntryRecordsByMonth = '''DELETE FROM gate_entry_record WHERE entry_datetime BETWEEN ? AND ?;'''
 
@@ -78,29 +78,12 @@ class GateSQLService {
     	return map;
 	}
 
-	private static void getMaxId(){
-		try
-     	{
-			Class.forName(driver);
-			conn = DriverManager.getConnection(url,userName,password);
-			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery(getMaxIdStmt);
-			while (rs.next()) {
-	            maxId = rs.getInt("max(entry_id)");
-	        }
-			conn.close();
-		} catch (Exception e) {
-         	e.printStackTrace();
-		}
-	}
-
 	public static void insertRecord(rowArr){
 		try {
 	        Connection conn = DriverManager.getConnection(url,userName,password);
 	        conn.setAutoCommit(false);
 
 	        PreparedStatement statement = conn.prepareStatement(insertRecordStmt);
-	        getMaxId();
 	        int curId = maxId + 1;
 	        int i = 0;
 	        for (def row : rowArr) {
@@ -111,7 +94,6 @@ class GateSQLService {
 		            statement.setInt(4, row[3]);
 		            statement.setInt(5, row[4]);
 		            statement.setInt(6, row[5]);
-		            statement.setInt(7, curId);
 		            statement.addBatch();
 		            curId++;
 		            i++;
